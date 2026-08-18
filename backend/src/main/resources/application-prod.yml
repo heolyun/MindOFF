@@ -1,0 +1,21 @@
+spring:
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 25
+
+server:
+  forward-headers-strategy: framework
+  shutdown: graceful
+
+management:
+  endpoint:
+    health:
+      show-details: never
+
+mindoff:
+  security:
+    mode: ${AUTH_MODE:cognito}
+  receipt:
+    ocr-mode: ${RECEIPT_OCR_MODE:textract}

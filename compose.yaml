@@ -1,0 +1,37 @@
+name: mindoff
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mindoff}
+      POSTGRES_USER: ${POSTGRES_USER:-mindoff}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mindoff}
+    ports:
+      - "5432:5432"
+    volumes:
+      - mindoff-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-mindoff}
+      DB_USERNAME: ${POSTGRES_USER:-mindoff}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-mindoff}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:8081,http://localhost:19006}
+      AUTH_MODE: dev
+      RECEIPT_OCR_MODE: sample
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  mindoff-postgres:

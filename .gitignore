@@ -1,0 +1,26 @@
+# Local secrets
+.env
+*.local
+
+# Java / Gradle
+.gradle/
+**/build/
+
+# Node / Expo
+**/node_modules/
+mobile/.expo/
+mobile/dist/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Internal inspection files
+.qa/
+
+.vercel
+.env*
+!.env.example
+!.env.production.example

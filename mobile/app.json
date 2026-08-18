@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "MindOFF",
+    "slug": "mindoff",
+    "version": "1.0.0",
+    "scheme": "mindoff",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F4F1EA",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "영수증 이미지를 불러와 구매 기록을 만들기 위해 사진 접근이 필요합니다.",
+          "cameraPermission": "영수증을 촬영해 구매 기록을 만들기 위해 카메라 접근이 필요합니다.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-web-browser",
+      "expo-secure-store"
+    ]
+  }
+}
