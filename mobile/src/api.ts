@@ -28,9 +28,11 @@ export const API_BASE_URL = IS_DEMO_MODE
 type SubscriptionInput = {
   name: string;
   amount: number;
+  billingCycle: 'MONTHLY' | 'ANNUAL';
   nextBillingAt: string | null;
   trialEndAt: string | null;
   managementUrl: string;
+  shared: boolean;
 };
 
 export type CompleteNeedInput = {
@@ -74,6 +76,7 @@ export type MindoffApi = {
   getHouseholdItems(session: Session): Promise<HouseholdItem[]>;
   addHouseholdItem(session: Session, name: string, purchaseUrl: string): Promise<HouseholdItem>;
   finishHouseholdItem(session: Session, itemId: string): Promise<HouseholdItem>;
+  keepUsingHouseholdItem(session: Session, itemId: string): Promise<HouseholdItem>;
   getNeeds(session: Session): Promise<NeedListItem[]>;
   addNeed(session: Session, name: string, purchaseUrl: string): Promise<NeedListItem>;
   completeNeed(session: Session, itemId: string, input: CompleteNeedInput): Promise<NeedListItem>;
@@ -221,6 +224,13 @@ const remoteApi: MindoffApi = {
     });
   },
 
+  keepUsingHouseholdItem(session, itemId) {
+    return request(`/api/household-items/${itemId}/still-using`, {
+      method: 'PATCH',
+      body: JSON.stringify({ userId: session.userId }),
+    });
+  },
+
   getNeeds(session) {
     return request(`/api/households/${session.householdId}/needs?userId=${session.userId}`);
   },
@@ -240,7 +250,7 @@ const remoteApi: MindoffApi = {
   },
 
   getSubscriptions(session) {
-    return request(`/api/users/${session.userId}/subscriptions`);
+    return request(`/api/users/${session.userId}/subscriptions?householdId=${session.householdId}`);
   },
 
   addSubscription(session, input) {
@@ -248,9 +258,10 @@ const remoteApi: MindoffApi = {
       method: 'POST',
       body: JSON.stringify({
         ...input,
-        billingCycle: 'MONTHLY',
+        billingCycle: input.billingCycle,
         managementUrl: input.managementUrl || null,
-        shared: false,
+        shared: input.shared,
+        householdId: session.householdId,
       }),
     });
   },
@@ -352,6 +363,7 @@ function initialDemoStore(): DemoStore {
       {
         id: createId(),
         userId: demoSession.userId,
+        householdId: null,
         name: 'YouTube Premium',
         amount: 14900,
         billingCycle: 'MONTHLY',
@@ -424,9 +436,17 @@ const demoApi: MindoffApi = {
     await previewDelay();
     const store = readDemoStore();
     const attentionLimit = addDays(2);
-    const attentionCount = store.fridge.filter(
+    const fridgeAttentionCount = store.fridge.filter(
       (item) => item.status === 'ACTIVE' && item.expiresAt !== null && item.expiresAt <= attentionLimit,
     ).length;
+    const usageAttentionCount = store.householdItems.filter(
+      (item) => item.status === 'ACTIVE' && item.predictedDays !== null
+        && addDaysFrom(item.purchasedAt, item.predictedDays) <= attentionLimit,
+    ).length;
+    const trialAttentionCount = store.subscriptions.filter(
+      (item) => item.trialEndAt !== null && item.trialEndAt >= today() && item.trialEndAt <= attentionLimit,
+    ).length;
+    const attentionCount = fridgeAttentionCount + usageAttentionCount + trialAttentionCount;
     const needListCount = store.needs.filter((item) => item.status === 'NEEDED').length;
     const recordedFixedLivingCost = store.subscriptions.reduce((total, item) => {
       return total + (item.billingCycle === 'ANNUAL' ? Number(item.amount) / 12 : Number(item.amount));
@@ -589,6 +609,16 @@ const demoApi: MindoffApi = {
     return item;
   },
 
+  async keepUsingHouseholdItem(_session, itemId) {
+    const store = readDemoStore();
+    const item = required(store.householdItems.find((candidate) => candidate.id === itemId));
+    const elapsedDays = Math.max(1, daysBetween(item.purchasedAt, today()));
+    item.predictedDays = elapsedDays + 7;
+    writeDemoStore(store);
+    await previewDelay();
+    return item;
+  },
+
   async getNeeds() {
     await previewDelay();
     return [...readDemoStore().needs];
@@ -648,18 +678,19 @@ const demoApi: MindoffApi = {
     return [...readDemoStore().subscriptions];
   },
 
-  async addSubscription(_session, input) {
+  async addSubscription(session, input) {
     const store = readDemoStore();
     const item: Subscription = {
       id: createId(),
       userId: demoSession.userId,
+      householdId: input.shared ? session.householdId : null,
       name: input.name,
       amount: input.amount,
-      billingCycle: 'MONTHLY',
+      billingCycle: input.billingCycle,
       nextBillingAt: input.nextBillingAt,
       trialEndAt: input.trialEndAt,
       managementUrl: input.managementUrl || null,
-      shared: false,
+      shared: input.shared,
     };
     store.subscriptions.unshift(item);
     writeDemoStore(store);
@@ -732,7 +763,7 @@ const demoApi: MindoffApi = {
     await previewDelay();
     const store = readDemoStore();
     const limit = addDays(2);
-    const items: AttentionItem[] = store.fridge
+    const fridgeItems: AttentionItem[] = store.fridge
       .filter((item) => item.status === 'ACTIVE' && item.expiresAt !== null && item.expiresAt <= limit)
       .map((item) => ({
         type: 'FRIDGE_EXPIRY' as const,
@@ -742,7 +773,29 @@ const demoApi: MindoffApi = {
         message: item.expiresAt! < today() ? '기한 지남' : '곧 만료',
         daysFromToday: daysBetween(today(), item.expiresAt!),
       }));
-    return items;
+    const usageItems: AttentionItem[] = store.householdItems
+      .filter((item) => item.status === 'ACTIVE' && item.predictedDays !== null)
+      .map((item) => ({ item, dueAt: addDaysFrom(item.purchasedAt, item.predictedDays!) }))
+      .filter(({ dueAt }) => dueAt <= limit)
+      .map(({ item, dueAt }) => ({
+        type: 'USAGE_PREDICTION' as const,
+        sourceId: item.id,
+        dueAt,
+        title: item.name,
+        message: '재구매 시점',
+        daysFromToday: daysBetween(today(), dueAt),
+      }));
+    const trialItems: AttentionItem[] = store.subscriptions
+      .filter((item) => item.trialEndAt !== null && item.trialEndAt >= today() && item.trialEndAt <= limit)
+      .map((item) => ({
+        type: 'TRIAL_END' as const,
+        sourceId: item.id,
+        dueAt: item.trialEndAt!,
+        title: item.name,
+        message: '체험 종료',
+        daysFromToday: daysBetween(today(), item.trialEndAt!),
+      }));
+    return [...fridgeItems, ...usageItems, ...trialItems].sort((left, right) => left.dueAt.localeCompare(right.dueAt));
   },
 };
 
@@ -755,6 +808,12 @@ export function today(): string {
 function addDays(days: number): string {
   const value = new Date();
   value.setDate(value.getDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+
+function addDaysFrom(date: string, days: number): string {
+  const value = new Date(`${date}T00:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + days);
   return value.toISOString().slice(0, 10);
 }
 

@@ -43,7 +43,7 @@ public class HomeService {
         LocalDate today = LocalDate.now();
         LocalDate monthStart = today.withDayOfMonth(1);
         LocalDate monthEnd = today.withDayOfMonth(today.lengthOfMonth());
-        List<Subscription> subscriptions = subscriptionRepository.findAllByUserIdOrderByNextBillingAtAsc(userId);
+        List<Subscription> subscriptions = subscriptionRepository.findVisibleToUser(userId, householdId);
         BigDecimal monthlyFixedCost = subscriptions.stream()
                 .map(HomeService::monthlyAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add)

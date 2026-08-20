@@ -72,6 +72,7 @@ export type NeedListItem = {
 export type Subscription = {
   id: string;
   userId: string;
+  householdId: string | null;
   name: string;
   amount: number;
   billingCycle: 'MONTHLY' | 'ANNUAL' | 'CUSTOM';

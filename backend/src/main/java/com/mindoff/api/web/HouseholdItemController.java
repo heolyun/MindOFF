@@ -69,6 +69,14 @@ public class HouseholdItemController {
         return inventoryService.finishHouseholdItem(itemId, request.userId(), request.addToNeedList());
     }
 
+    @PatchMapping("/household-items/{itemId}/still-using")
+    public HouseholdItem keepUsing(
+            @PathVariable UUID itemId,
+            @Valid @RequestBody StillUsingRequest request
+    ) {
+        return inventoryService.keepUsingHouseholdItem(itemId, request.userId());
+    }
+
     public record AddHouseholdItemRequest(
             @NotNull UUID userId,
             @NotBlank @Size(max = 160) String name,
@@ -79,5 +87,8 @@ public class HouseholdItemController {
     }
 
     public record FinishRequest(@NotNull UUID userId, boolean addToNeedList) {
+    }
+
+    public record StillUsingRequest(@NotNull UUID userId) {
     }
 }

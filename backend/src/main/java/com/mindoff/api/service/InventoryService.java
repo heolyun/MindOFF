@@ -137,6 +137,19 @@ public class InventoryService {
     }
 
     @Transactional
+    public HouseholdItem keepUsingHouseholdItem(UUID itemId, UUID userId) {
+        HouseholdItem item = householdItemRepository.findById(itemId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "생활용품을 찾을 수 없습니다."));
+        accessService.requireMember(item.getHouseholdId(), userId);
+        if (item.getStatus() != HouseholdItemStatus.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "사용 중인 생활용품만 보정할 수 있습니다.");
+        }
+        int elapsedDays = Math.max(1, Math.toIntExact(ChronoUnit.DAYS.between(item.getPurchasedAt(), LocalDate.now())));
+        item.applyPrediction(elapsedDays + 7);
+        return item;
+    }
+
+    @Transactional
     public HouseholdItem repurchaseHouseholdItem(UUID previousItemId, UUID userId, LocalDate purchasedAt) {
         return repurchaseHouseholdItem(previousItemId, userId, purchasedAt, null, null);
     }

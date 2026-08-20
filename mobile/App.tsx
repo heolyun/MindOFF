@@ -166,7 +166,7 @@ export default function App() {
           />
         ) : (
           <>
-            {tab === 'home' && <HomeScreen session={session} />}
+            {tab === 'home' && <HomeScreen session={session} onNavigate={(target) => leaveInvitation(target)} />}
             {tab === 'household' && <HouseholdScreen session={session} />}
             {tab === 'receipts' && <ReceiptsScreen session={session} />}
             {tab === 'fridge' && <FridgeScreen session={session} />}

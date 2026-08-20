@@ -99,7 +99,8 @@ class CoreFlowIntegrationTests {
                 LocalDate.now().plusDays(10),
                 LocalDate.now().plusDays(2),
                 "https://example.com/manage",
-                false
+                false,
+                null
         ));
 
         HomeService.HomeSummary summary = homeService.summarize(household.getId(), user.getId());
@@ -255,6 +256,77 @@ class CoreFlowIntegrationTests {
                     assertThat(item.getExpiresAt()).isEqualTo(nextExpiry);
                 });
         assertThat(need.getStatus()).isEqualTo(NeedListStatus.PURCHASED);
+    }
+
+    @Test
+    void stillUsingMovesThePredictionSevenDaysForward() {
+        BootstrapService.BootstrapResult bootstrap = bootstrapService.bootstrap(
+                "still-using@mindoff.local",
+                "Still Using Owner",
+                "생활용품 보정 집"
+        );
+        HouseholdItem item = new HouseholdItem(
+                bootstrap.household().getId(),
+                "세탁세제",
+                LocalDate.now().minusDays(20),
+                true,
+                null
+        );
+        item.applyPrediction(10);
+        item = householdItemRepository.save(item);
+
+        HouseholdItem adjusted = inventoryService.keepUsingHouseholdItem(item.getId(), bootstrap.user().getId());
+
+        assertThat(adjusted.getPredictedDays()).isEqualTo(27);
+    }
+
+    @Test
+    void householdMembersSeeSharedSubscriptionsOnly() {
+        BootstrapService.BootstrapResult owner = bootstrapService.bootstrap(
+                "subscription-owner@mindoff.local",
+                "Subscription Owner",
+                "구독 공유 집"
+        );
+        BootstrapService.BootstrapResult member = bootstrapService.bootstrap(
+                "subscription-member@mindoff.local",
+                "Subscription Member",
+                "가입 전 집"
+        );
+        var invitation = invitationService.create(
+                owner.household().getId(),
+                owner.user().getId(),
+                member.user().getEmail()
+        );
+        invitationService.accept(invitation.getToken(), member.user().getId());
+        Subscription shared = subscriptionRepository.save(new Subscription(
+                owner.user().getId(),
+                "공유 연간 구독",
+                BigDecimal.valueOf(120_000),
+                BillingCycle.ANNUAL,
+                LocalDate.now().plusMonths(1),
+                LocalDate.now().plusDays(1),
+                null,
+                true,
+                owner.household().getId()
+        ));
+        Subscription privateSubscription = subscriptionRepository.save(new Subscription(
+                owner.user().getId(),
+                "개인 구독",
+                BigDecimal.valueOf(5_000),
+                BillingCycle.MONTHLY,
+                LocalDate.now().plusDays(5),
+                null,
+                null,
+                false,
+                owner.household().getId()
+        ));
+
+        assertThat(subscriptionRepository.findVisibleToUser(member.user().getId(), owner.household().getId()))
+                .contains(shared)
+                .doesNotContain(privateSubscription);
+        HomeService.HomeSummary memberSummary = homeService.summarize(owner.household().getId(), member.user().getId());
+        assertThat(memberSummary.recordedFixedLivingCost()).isEqualByComparingTo("10000");
+        assertThat(memberSummary.attentionCount()).isEqualTo(1);
     }
 
     @Test

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -34,9 +35,9 @@ public class SubscriptionController {
 
     @GetMapping
     @Transactional(readOnly = true)
-    public List<Subscription> list(@PathVariable UUID userId) {
-        accessService.requireUser(userId);
-        return subscriptionRepository.findAllByUserIdOrderByNextBillingAtAsc(userId);
+    public List<Subscription> list(@PathVariable UUID userId, @RequestParam UUID householdId) {
+        accessService.requireMember(householdId, userId);
+        return subscriptionRepository.findVisibleToUser(userId, householdId);
     }
 
     @PostMapping
@@ -45,7 +46,11 @@ public class SubscriptionController {
             @PathVariable UUID userId,
             @Valid @RequestBody AddSubscriptionRequest request
     ) {
-        accessService.requireUser(userId);
+        if (request.shared()) {
+            accessService.requireMember(request.householdId(), userId);
+        } else {
+            accessService.requireUser(userId);
+        }
         return subscriptionRepository.save(new Subscription(
                 userId,
                 request.name(),
@@ -54,7 +59,8 @@ public class SubscriptionController {
                 request.nextBillingAt(),
                 request.trialEndAt(),
                 request.managementUrl(),
-                request.shared()
+                request.shared(),
+                request.shared() ? request.householdId() : null
         ));
     }
 
@@ -65,7 +71,8 @@ public class SubscriptionController {
             LocalDate nextBillingAt,
             LocalDate trialEndAt,
             @Size(max = 1000) String managementUrl,
-            boolean shared
+            boolean shared,
+            @NotNull UUID householdId
     ) {
     }
 }

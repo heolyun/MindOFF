@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../api';
 import type { AttentionItem, HomeSummary, Session } from '../types';
 import { AsyncState, Card, colors, Screen, SectionHeader } from '../ui';
 
-export function HomeScreen({ session }: { session: Session }) {
+type HomeTarget = 'receipts' | 'fridge' | 'supplies' | 'needs' | 'subscriptions';
+
+export function HomeScreen({ session, onNavigate }: { session: Session; onNavigate: (target: HomeTarget) => void }) {
   const [summary, setSummary] = useState<HomeSummary | null>(null);
   const [attention, setAttention] = useState<AttentionItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,22 +41,27 @@ export function HomeScreen({ session }: { session: Session }) {
       {summary && (
         <>
           <View style={styles.metricGrid}>
-            <Metric label="확인" value={`${summary.attentionCount}건`} tone="accent" />
-            <Metric label="구매" value={`${summary.needListCount}개`} tone="mint" />
-            <Metric label="기록된 고정비" value={won(summary.recordedFixedLivingCost)} />
-            <Metric label="이번 달 기록" value={won(summary.receiptPurchaseTotal)} />
+            <Metric label="확인" value={`${summary.attentionCount}건`} tone="accent" onPress={() => onNavigate('fridge')} />
+            <Metric label="구매" value={`${summary.needListCount}개`} tone="mint" onPress={() => onNavigate('needs')} />
+            <Metric label="기록된 고정비" value={won(summary.recordedFixedLivingCost)} onPress={() => onNavigate('subscriptions')} />
+            <Metric label="이번 달 기록" value={won(summary.receiptPurchaseTotal)} onPress={() => onNavigate('receipts')} />
           </View>
           {attention.length > 0 && (
             <Card>
               <Text style={styles.cardTitle}>확인</Text>
               {attention.slice(0, 3).map((item) => (
-                <View key={`${item.type}-${item.sourceId}`} style={styles.attentionRow}>
+                <Pressable
+                  key={`${item.type}-${item.sourceId}`}
+                  accessibilityRole="button"
+                  onPress={() => onNavigate(targetForAttention(item.type))}
+                  style={({ pressed }) => [styles.attentionRow, pressed && styles.pressed]}
+                >
                   <View style={styles.attentionDot} />
                   <View style={styles.attentionCopy}>
                     <Text style={styles.attentionTitle}>{item.title}</Text>
                     <Text style={styles.attentionBody}>{item.message} · {item.dueAt}</Text>
                   </View>
-                </View>
+                </Pressable>
               ))}
             </Card>
           )}
@@ -68,17 +75,29 @@ function Metric({
   label,
   value,
   tone = 'plain',
+  onPress,
 }: {
   label: string;
   value: string;
   tone?: 'plain' | 'accent' | 'mint';
+  onPress: () => void;
 }) {
   return (
-    <View style={[styles.metric, tone === 'accent' && styles.metricAccent, tone === 'mint' && styles.metricMint]}>
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.metric, tone === 'accent' && styles.metricAccent, tone === 'mint' && styles.metricMint, pressed && styles.pressed]}
+    >
       <Text style={styles.metricLabel}>{label}</Text>
       <Text style={styles.metricValue}>{value}</Text>
-    </View>
+    </Pressable>
   );
+}
+
+function targetForAttention(type: AttentionItem['type']): HomeTarget {
+  if (type === 'USAGE_PREDICTION') return 'supplies';
+  if (type === 'TRIAL_END') return 'subscriptions';
+  return 'fridge';
 }
 
 function won(value: number) {
@@ -107,4 +126,5 @@ const styles = StyleSheet.create({
   attentionCopy: { flex: 1, gap: 3 },
   attentionTitle: { color: colors.ink, fontSize: 15, fontWeight: '800' },
   attentionBody: { color: colors.muted, fontSize: 12, lineHeight: 18 },
+  pressed: { opacity: 0.72 },
 });

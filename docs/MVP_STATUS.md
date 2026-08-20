@@ -14,10 +14,10 @@
 | Household | In Progress | 자동 생성, 구성원 조회, 초대 링크 생성·공유·수락·상태 확인 | 초대 이메일 전달 |
 | Receipt | In Progress | 촬영·이미지 업로드, OCR 초안, 전체 필드 검토·분류·확정 | 실제 Textract 검증 |
 | Refrigerator | Implemented | 등록, 구매일, 유통기한, 임박 표시, 다 먹음, Need 재구매 | `아직 있어요` 상태 보정 |
-| Household Items | In Progress | 등록, 다 씀, 사용기간, 가중평균 예측 | 상태 보정 응답과 예측일 UI |
-| Subscription | In Progress | 기본 등록, 월 금액, 체험 종료일, 관리 URL | 연/월 선택과 Household 공유 |
+| Household Items | Implemented | 등록, 다 씀, 사용기간, 가중평균 예측, 예상일, `아직 있어요` 보정 | 예측 정확도 데이터 축적 |
+| Subscription | Implemented | 월·연 결제, 월 환산 금액, 체험 종료, 관리 URL, Household 공유 | 수정·삭제 |
 | Need List | Implemented | 자동/수동 추가, 구매 링크, 상세값 편집, 냉장고·생활용품 재구매 | 구매처 추천 연동 |
-| Home | Implemented | 확인 목록, Need 수, 기록된 고정비, 이번 달 영수증 금액 | 구매 품목 요약과 행동 연결 |
+| Home | Implemented | 확인 목록, Need 수, 고정비, 이번 달 영수증 금액, 화면 행동 연결 | 구매 품목 요약 확장 |
 | Push | Planned | 없음 | 임박·예상 소진·체험 종료 알림 |
 | Widget | Planned | 없음 | 모바일 위젯 |
 
@@ -48,6 +48,9 @@
 - [x] Household 초대 링크 진입·수락·만료 처리
 - [x] 영수증 촬영과 OCR 전체 필드 검토
 - [x] Need 구매 완료 후 냉장고·생활용품 재등록
+- [x] 생활용품 예상 소진일과 `아직 있어요` 보정
+- [x] 구독 월·연 결제와 Household 공유
+- [x] 홈 지표·확인 항목 행동 연결
 - [ ] 실제 Cognito 가입·로그인 검증
 - [ ] 실제 S3·Textract 영수증 검증
 - [ ] Household 초대 이메일/딥링크

@@ -20,6 +20,9 @@ public class Subscription {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
+    @Column(name = "household_id")
+    private UUID householdId;
+
     @Column(nullable = false, length = 160)
     private String name;
 
@@ -56,7 +59,8 @@ public class Subscription {
             LocalDate nextBillingAt,
             LocalDate trialEndAt,
             String managementUrl,
-            boolean shared
+            boolean shared,
+            UUID householdId
     ) {
         this.id = UUID.randomUUID();
         this.userId = userId;
@@ -67,11 +71,13 @@ public class Subscription {
         this.trialEndAt = trialEndAt;
         this.managementUrl = managementUrl == null || managementUrl.isBlank() ? null : managementUrl.trim();
         this.shared = shared;
+        this.householdId = shared ? householdId : null;
         this.createdAt = Instant.now();
     }
 
     public UUID getId() { return id; }
     public UUID getUserId() { return userId; }
+    public UUID getHouseholdId() { return householdId; }
     public String getName() { return name; }
     public BigDecimal getAmount() { return amount; }
     public BillingCycle getBillingCycle() { return billingCycle; }

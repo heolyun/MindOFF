@@ -64,7 +64,7 @@ public class AttentionService {
                         "재구매 시점"
                 )));
 
-        subscriptionRepository.findAllByUserIdOrderByNextBillingAtAsc(userId).stream()
+        subscriptionRepository.findVisibleToUser(userId, householdId).stream()
                 .filter(item -> item.getTrialEndAt() != null)
                 .filter(item -> !item.getTrialEndAt().isBefore(today) && !item.getTrialEndAt().isAfter(limit))
                 .forEach(item -> result.add(new AttentionItem(

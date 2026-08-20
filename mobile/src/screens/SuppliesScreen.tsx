@@ -56,6 +56,19 @@ export function SuppliesScreen({ session }: { session: Session }) {
     }
   }
 
+  async function keepUsing(itemId: string) {
+    setBusy(true);
+    setError(null);
+    try {
+      await api.keepUsingHouseholdItem(session, itemId);
+      await load();
+    } catch (reason) {
+      setError(messageOf(reason));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const activeItems = items.filter((item) => item.status === 'ACTIVE');
 
   return (
@@ -82,6 +95,15 @@ export function SuppliesScreen({ session }: { session: Session }) {
             <Text style={styles.badge}>사용 중</Text>
           </View>
           <Text style={styles.meta}>{item.purchasedAt}</Text>
+          {item.predictedDays ? (
+            <View style={styles.prediction}>
+              <Text style={styles.predictionLabel}>예상 소진</Text>
+              <Text style={styles.predictionDate}>{addDays(item.purchasedAt, item.predictedDays)}</Text>
+            </View>
+          ) : null}
+          {item.predictedDays && addDays(item.purchasedAt, item.predictedDays) <= today() ? (
+            <PrimaryButton label="아직 있어요" onPress={() => void keepUsing(item.id)} disabled={busy} />
+          ) : null}
           <PrimaryButton label="다 씀" onPress={() => void finish(item.id)} variant="quiet" disabled={busy} />
         </Card>
       ))}
@@ -93,10 +115,23 @@ function messageOf(reason: unknown) {
   return reason instanceof Error ? reason.message : '요청을 처리하지 못했습니다.';
 }
 
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function addDays(date: string, days: number) {
+  const value = new Date(`${date}T00:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+
 const styles = StyleSheet.create({
   formTitle: { color: colors.ink, fontSize: 18, fontWeight: '800' },
   itemTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   itemName: { color: colors.ink, fontSize: 18, fontWeight: '800', flex: 1 },
   badge: { color: colors.ink, fontSize: 12, fontWeight: '800', backgroundColor: colors.mint, padding: 7, borderRadius: 10 },
   meta: { color: colors.muted, fontSize: 13 },
+  prediction: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#FBE6C5', borderRadius: 12, padding: 10 },
+  predictionLabel: { color: '#7A5522', fontSize: 12, fontWeight: '700' },
+  predictionDate: { color: colors.ink, fontSize: 13, fontWeight: '900' },
 });
