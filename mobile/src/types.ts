@@ -13,6 +13,31 @@ export type HomeSummary = {
   receiptPurchaseTotal: number;
 };
 
+export type HouseholdMember = {
+  userId: string;
+  email: string;
+  name: string;
+  role: 'OWNER' | 'MEMBER';
+};
+
+export type HouseholdDetails = {
+  id: string;
+  name: string;
+  ownerId: string;
+  members: HouseholdMember[];
+};
+
+export type HouseholdInvitation = {
+  id: string;
+  householdId: string;
+  email: string;
+  token: string;
+  status: 'PENDING' | 'ACCEPTED' | 'EXPIRED';
+  expiresAt: string;
+  createdAt: string;
+  acceptedAt: string | null;
+};
+
 export type FridgeItem = {
   id: string;
   householdId: string;

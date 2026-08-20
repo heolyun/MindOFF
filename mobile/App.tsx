@@ -6,6 +6,7 @@ import { API_BASE_URL, api, setAccessToken, setAccessTokenRefresher } from './sr
 import { AUTH_MODE, refreshAccessToken, restoreAccessToken, signInWithCognito, signOut } from './src/auth';
 import { FridgeScreen } from './src/screens/FridgeScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
+import { HouseholdScreen } from './src/screens/HouseholdScreen';
 import { NeedListScreen } from './src/screens/NeedListScreen';
 import { ReceiptsScreen } from './src/screens/ReceiptsScreen';
 import { SubscriptionsScreen } from './src/screens/SubscriptionsScreen';
@@ -13,7 +14,7 @@ import { SuppliesScreen } from './src/screens/SuppliesScreen';
 import type { Session } from './src/types';
 import { colors } from './src/ui';
 
-type Tab = 'home' | 'receipts' | 'fridge' | 'supplies' | 'needs' | 'subscriptions';
+type Tab = 'home' | 'household' | 'receipts' | 'fridge' | 'supplies' | 'needs' | 'subscriptions';
 
 const tabs: { key: Tab; label: string; mark: string }[] = [
   { key: 'home', label: '홈', mark: '01' },
@@ -118,10 +119,19 @@ export default function App() {
       <View style={styles.topBar}>
         <Text style={styles.logo}>MindOFF</Text>
         <View style={styles.topActions}>
-          <View style={styles.householdPill}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="우리 집 관리"
+            onPress={() => setTab('household')}
+            style={({ pressed }) => [
+              styles.householdPill,
+              tab === 'household' && styles.householdPillSelected,
+              pressed && styles.householdPillPressed,
+            ]}
+          >
             <View style={styles.onlineDot} />
             <Text style={styles.householdText}>{session.householdName}</Text>
-          </View>
+          </Pressable>
           {AUTH_MODE === 'cognito' && (
             <Pressable accessibilityRole="button" onPress={() => void logout()} style={styles.logoutButton}>
               <Text style={styles.logoutText}>로그아웃</Text>
@@ -132,6 +142,7 @@ export default function App() {
 
       <View style={styles.content}>
         {tab === 'home' && <HomeScreen session={session} />}
+        {tab === 'household' && <HouseholdScreen session={session} />}
         {tab === 'receipts' && <ReceiptsScreen session={session} />}
         {tab === 'fridge' && <FridgeScreen session={session} />}
         {tab === 'supplies' && <SuppliesScreen session={session} />}
@@ -175,6 +186,8 @@ const styles = StyleSheet.create({
   logo: { color: colors.ink, fontSize: 20, fontWeight: '900', letterSpacing: -0.5 },
   topActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   householdPill: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: colors.surface, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999 },
+  householdPillSelected: { backgroundColor: colors.mint },
+  householdPillPressed: { opacity: 0.72 },
   onlineDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#54A883' },
   householdText: { color: colors.ink, fontSize: 12, fontWeight: '700' },
   logoutButton: { paddingHorizontal: 10, paddingVertical: 8 },

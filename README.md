@@ -10,6 +10,7 @@ MindOFF는 영수증·냉장고·생활용품·구독처럼 잊기 쉬운 생활
 
 - Expo TypeScript 앱, Spring Boot API, PostgreSQL, Docker Compose
 - 냉장고·생활용품·Need List·구독 기본 흐름
+- Household 구성원 조회와 초대 링크 생성·공유
 - 영수증 이미지 접수, OCR 초안 검토·확정, 품목 자동 반영
 - 사용주기 기록, 최근 기록 가중 예측, 구매 완료 후 새 주기 시작
 - 유통기한·사용주기·무료체험 Attention과 홈 요약

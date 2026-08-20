@@ -4,7 +4,10 @@ import type {
   AttentionItem,
   FridgeItem,
   HomeSummary,
+  HouseholdDetails,
+  HouseholdInvitation,
   HouseholdItem,
+  HouseholdMember,
   NeedListItem,
   ReceiptItemTarget,
   ReceiptLine,
@@ -54,6 +57,9 @@ export type ReceiptConfirmInput = {
 export type MindoffApi = {
   bootstrap(): Promise<Session>;
   getHome(session: Session): Promise<HomeSummary>;
+  getHousehold(session: Session): Promise<HouseholdDetails>;
+  getHouseholdInvitations(session: Session): Promise<HouseholdInvitation[]>;
+  createHouseholdInvitation(session: Session, email: string): Promise<HouseholdInvitation>;
   getFridge(session: Session): Promise<FridgeItem[]>;
   addFridge(session: Session, name: string, expiresAt: string | null): Promise<FridgeItem>;
   finishFridge(session: Session, itemId: string): Promise<FridgeItem>;
@@ -141,6 +147,21 @@ const remoteApi: MindoffApi = {
 
   getHome(session) {
     return request(`/api/home?householdId=${session.householdId}&userId=${session.userId}`);
+  },
+
+  getHousehold(session) {
+    return request(`/api/households/${session.householdId}?userId=${session.userId}`);
+  },
+
+  getHouseholdInvitations(session) {
+    return request(`/api/households/${session.householdId}/invitations?userId=${session.userId}`);
+  },
+
+  createHouseholdInvitation(session, email) {
+    return request(`/api/households/${session.householdId}/invitations`, {
+      method: 'POST',
+      body: JSON.stringify({ requesterId: session.userId, email }),
+    });
   },
 
   getFridge(session) {
@@ -247,6 +268,8 @@ const remoteApi: MindoffApi = {
 };
 
 type DemoStore = {
+  members: HouseholdMember[];
+  invitations: HouseholdInvitation[];
   fridge: FridgeItem[];
   householdItems: HouseholdItem[];
   needs: NeedListItem[];
@@ -267,6 +290,15 @@ let memoryStore: DemoStore | null = null;
 
 function initialDemoStore(): DemoStore {
   return {
+    members: [
+      {
+        userId: demoSession.userId,
+        email: demoSession.email,
+        name: demoSession.userName,
+        role: 'OWNER',
+      },
+    ],
+    invitations: [],
     fridge: [
       {
         id: createId(),
@@ -339,7 +371,18 @@ function readDemoStore(): DemoStore {
   if (memoryStore) return memoryStore;
   try {
     const raw = globalThis.localStorage?.getItem(storageKey);
-    memoryStore = raw ? (JSON.parse(raw) as DemoStore) : initialDemoStore();
+    if (!raw) {
+      memoryStore = initialDemoStore();
+    } else {
+      const parsed = JSON.parse(raw) as Partial<DemoStore>;
+      const initial = initialDemoStore();
+      memoryStore = {
+        ...initial,
+        ...parsed,
+        members: parsed.members ?? initial.members,
+        invitations: parsed.invitations ?? initial.invitations,
+      };
+    }
   } catch {
     memoryStore = initialDemoStore();
   }
@@ -378,6 +421,47 @@ const demoApi: MindoffApi = {
       .filter((item) => item.receipt.status === 'CONFIRMED' && item.receipt.purchasedAt >= monthStart)
       .reduce((total, item) => total + Number(item.receipt.totalAmount), 0);
     return { attentionCount, needListCount, recordedFixedLivingCost, receiptPurchaseTotal };
+  },
+
+  async getHousehold() {
+    await previewDelay();
+    return {
+      id: demoSession.householdId,
+      name: demoSession.householdName,
+      ownerId: demoSession.userId,
+      members: [...readDemoStore().members],
+    };
+  },
+
+  async getHouseholdInvitations() {
+    await previewDelay();
+    return [...readDemoStore().invitations];
+  },
+
+  async createHouseholdInvitation(_session, email) {
+    const store = readDemoStore();
+    const normalizedEmail = email.trim().toLowerCase();
+    const existing = store.invitations.find(
+      (candidate) => candidate.email === normalizedEmail && candidate.status === 'PENDING',
+    );
+    if (existing) return existing;
+    const now = new Date();
+    const expiresAt = new Date(now);
+    expiresAt.setDate(expiresAt.getDate() + 7);
+    const invitation: HouseholdInvitation = {
+      id: createId(),
+      householdId: demoSession.householdId,
+      email: normalizedEmail,
+      token: createId(),
+      status: 'PENDING',
+      expiresAt: expiresAt.toISOString(),
+      createdAt: now.toISOString(),
+      acceptedAt: null,
+    };
+    store.invitations.unshift(invitation);
+    writeDemoStore(store);
+    await previewDelay();
+    return invitation;
   },
 
   async getFridge() {
