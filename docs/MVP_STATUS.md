@@ -11,7 +11,7 @@
 | 영역 | 상태 | 현재 범위 | 다음 완료 조건 |
 | --- | --- | --- | --- |
 | Account | In Progress | Cognito PKCE 로그인, JWT 검증, 토큰 보관·갱신·로그아웃 코드 | 실제 Cognito 연결 및 가입·로그아웃 검증 |
-| Household | In Progress | 자동 생성, 구성원 조회, 초대 링크 생성·공유·상태 확인, 수락 모델 | 초대 이메일과 링크 자동 수락 |
+| Household | In Progress | 자동 생성, 구성원 조회, 초대 링크 생성·공유·수락·상태 확인 | 초대 이메일 전달 |
 | Receipt | In Progress | 이미지 업로드, OCR 초안, 검토·분류·확정 | 카메라 촬영, 전체 필드 수정, 실제 Textract 검증 |
 | Refrigerator | Implemented | 등록, 구매일, 유통기한, 임박 표시, 다 먹음 | `아직 있어요`와 구매목록 선택 UI |
 | Household Items | In Progress | 등록, 다 씀, 사용기간, 가중평균 예측 | 상태 보정 응답과 예측일 UI |
@@ -45,6 +45,7 @@
 - [x] Cognito 토큰 갱신과 로컬 로그아웃
 - [x] Household 초대 생성·수락 데이터 모델
 - [x] Household 구성원·초대 링크 관리 화면
+- [x] Household 초대 링크 진입·수락·만료 처리
 - [ ] 실제 Cognito 가입·로그인 검증
 - [ ] 실제 S3·Textract 영수증 검증
 - [ ] Household 초대 이메일/딥링크

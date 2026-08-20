@@ -1,6 +1,7 @@
 package com.mindoff.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.mindoff.api.domain.BillingCycle;
 import com.mindoff.api.domain.FridgeItem;
@@ -222,21 +223,42 @@ class CoreFlowIntegrationTests {
                 "Invited",
                 "초대 전 집"
         );
+        BootstrapService.BootstrapResult other = bootstrapService.bootstrap(
+                "other@mindoff.local",
+                "Other",
+                "다른 집"
+        );
 
         var invitation = invitationService.create(
                 owner.household().getId(),
                 owner.user().getId(),
                 invited.user().getEmail()
         );
+        var duplicate = invitationService.create(
+                owner.household().getId(),
+                owner.user().getId(),
+                invited.user().getEmail().toUpperCase()
+        );
+        assertThat(duplicate.getId()).isEqualTo(invitation.getId());
         assertThat(memberRepository.findByHouseholdIdAndUserId(
                 owner.household().getId(), invited.user().getId()
         )).isEmpty();
+        assertThatThrownBy(() -> invitationService.accept(invitation.getToken(), other.user().getId()))
+                .hasMessageContaining("403 FORBIDDEN");
 
-        invitationService.accept(invitation.getToken(), invited.user().getId());
+        var accepted = invitationService.accept(invitation.getToken(), invited.user().getId());
+        var acceptedAgain = invitationService.accept(invitation.getToken(), invited.user().getId());
+        var nextSession = bootstrapService.bootstrap(
+                invited.user().getEmail(),
+                invited.user().getName(),
+                "사용하지 않는 이름"
+        );
 
         assertThat(memberRepository.findByHouseholdIdAndUserId(
                 owner.household().getId(), invited.user().getId()
         )).isPresent();
+        assertThat(acceptedAgain.getId()).isEqualTo(accepted.getId());
+        assertThat(nextSession.household().getId()).isEqualTo(owner.household().getId());
         assertThat(invitation.getStatus().name()).isEqualTo("ACCEPTED");
     }
 

@@ -60,6 +60,7 @@ export type MindoffApi = {
   getHousehold(session: Session): Promise<HouseholdDetails>;
   getHouseholdInvitations(session: Session): Promise<HouseholdInvitation[]>;
   createHouseholdInvitation(session: Session, email: string): Promise<HouseholdInvitation>;
+  acceptHouseholdInvitation(session: Session, token: string): Promise<HouseholdMember>;
   getFridge(session: Session): Promise<FridgeItem[]>;
   addFridge(session: Session, name: string, expiresAt: string | null): Promise<FridgeItem>;
   finishFridge(session: Session, itemId: string): Promise<FridgeItem>;
@@ -161,6 +162,13 @@ const remoteApi: MindoffApi = {
     return request(`/api/households/${session.householdId}/invitations`, {
       method: 'POST',
       body: JSON.stringify({ requesterId: session.userId, email }),
+    });
+  },
+
+  acceptHouseholdInvitation(session, token) {
+    return request(`/api/household-invitations/${encodeURIComponent(token)}/accept`, {
+      method: 'POST',
+      body: JSON.stringify({ userId: session.userId }),
     });
   },
 
@@ -435,17 +443,20 @@ const demoApi: MindoffApi = {
 
   async getHouseholdInvitations() {
     await previewDelay();
-    return [...readDemoStore().invitations];
+    const store = readDemoStore();
+    if (expireDemoInvitations(store)) writeDemoStore(store);
+    return [...store.invitations];
   },
 
   async createHouseholdInvitation(_session, email) {
     const store = readDemoStore();
     const normalizedEmail = email.trim().toLowerCase();
+    const now = new Date();
     const existing = store.invitations.find(
       (candidate) => candidate.email === normalizedEmail && candidate.status === 'PENDING',
     );
-    if (existing) return existing;
-    const now = new Date();
+    if (existing && new Date(existing.expiresAt).getTime() > now.getTime()) return existing;
+    if (existing) existing.status = 'EXPIRED';
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + 7);
     const invitation: HouseholdInvitation = {
@@ -462,6 +473,34 @@ const demoApi: MindoffApi = {
     writeDemoStore(store);
     await previewDelay();
     return invitation;
+  },
+
+  async acceptHouseholdInvitation(_session, token) {
+    const store = readDemoStore();
+    const invitation = store.invitations.find((candidate) => candidate.token === token);
+    if (!invitation) throw new Error('초대 링크를 찾을 수 없습니다.');
+    if (invitation.status === 'PENDING' && new Date(invitation.expiresAt).getTime() <= Date.now()) {
+      invitation.status = 'EXPIRED';
+      writeDemoStore(store);
+    }
+    if (invitation.status === 'EXPIRED') throw new Error('초대가 만료되었습니다.');
+    const existingMember = store.members.find((member) => member.email === invitation.email);
+    if (invitation.status === 'ACCEPTED') {
+      if (!existingMember) throw new Error('초대 상태를 확인할 수 없습니다.');
+      return existingMember;
+    }
+    const member: HouseholdMember = existingMember ?? {
+      userId: createId(),
+      email: invitation.email,
+      name: invitation.email.split('@')[0],
+      role: 'MEMBER',
+    };
+    if (!existingMember) store.members.push(member);
+    invitation.status = 'ACCEPTED';
+    invitation.acceptedAt = new Date().toISOString();
+    writeDemoStore(store);
+    await previewDelay();
+    return member;
   },
 
   async getFridge() {
@@ -714,6 +753,18 @@ function createId(): string {
 function required<T>(value: T | undefined): T {
   if (value === undefined) throw new Error('미리보기 항목을 찾을 수 없습니다.');
   return value;
+}
+
+function expireDemoInvitations(store: DemoStore): boolean {
+  const now = Date.now();
+  let changed = false;
+  for (const invitation of store.invitations) {
+    if (invitation.status === 'PENDING' && new Date(invitation.expiresAt).getTime() <= now) {
+      invitation.status = 'EXPIRED';
+      changed = true;
+    }
+  }
+  return changed;
 }
 
 function demoReceiptLine(

@@ -37,7 +37,7 @@ public class BootstrapService {
                 .orElseGet(() -> new AppUser(email, name));
         userRepository.save(user);
 
-        Household household = memberRepository.findFirstByUserIdOrderByCreatedAtAsc(user.getId())
+        Household household = memberRepository.findFirstByUserIdOrderByCreatedAtDesc(user.getId())
                 .flatMap(member -> householdRepository.findById(member.getHouseholdId()))
                 .orElseGet(() -> createHousehold(user.getId(), householdName));
 
@@ -55,7 +55,7 @@ public class BootstrapService {
                 .orElseGet(() -> AppUser.cognito(subject, email, name));
         userRepository.save(user);
 
-        Household household = memberRepository.findFirstByUserIdOrderByCreatedAtAsc(user.getId())
+        Household household = memberRepository.findFirstByUserIdOrderByCreatedAtDesc(user.getId())
                 .flatMap(member -> householdRepository.findById(member.getHouseholdId()))
                 .orElseGet(() -> createHousehold(user.getId(), "내 집"));
         return new BootstrapResult(user, household);

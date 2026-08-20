@@ -1,12 +1,15 @@
 import { StatusBar } from 'expo-status-bar';
+import * as Linking from 'expo-linking';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { API_BASE_URL, api, setAccessToken, setAccessTokenRefresher } from './src/api';
 import { AUTH_MODE, refreshAccessToken, restoreAccessToken, signInWithCognito, signOut } from './src/auth';
+import { clearInviteFromWebUrl, inviteTokenFromUrl } from './src/inviteLinks';
 import { FridgeScreen } from './src/screens/FridgeScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { HouseholdScreen } from './src/screens/HouseholdScreen';
+import { InvitationAcceptScreen } from './src/screens/InvitationAcceptScreen';
 import { NeedListScreen } from './src/screens/NeedListScreen';
 import { ReceiptsScreen } from './src/screens/ReceiptsScreen';
 import { SubscriptionsScreen } from './src/screens/SubscriptionsScreen';
@@ -26,11 +29,15 @@ const tabs: { key: Tab; label: string; mark: string }[] = [
 ];
 
 export default function App() {
+  const linkingUrl = Linking.useLinkingURL();
+  const linkedInviteToken = inviteTokenFromUrl(linkingUrl);
   const [session, setSession] = useState<Session | null>(null);
   const [tab, setTab] = useState<Tab>('home');
   const [error, setError] = useState<string | null>(null);
   const [needsLogin, setNeedsLogin] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
+  const [dismissedInviteToken, setDismissedInviteToken] = useState<string | null>(null);
+  const activeInviteToken = linkedInviteToken === dismissedInviteToken ? null : linkedInviteToken;
 
   useEffect(() => {
     let active = true;
@@ -81,6 +88,12 @@ export default function App() {
     setTab('home');
   }
 
+  function leaveInvitation(nextTab: Tab) {
+    if (activeInviteToken) setDismissedInviteToken(activeInviteToken);
+    clearInviteFromWebUrl();
+    setTab(nextTab);
+  }
+
   if (!session) {
     return (
       <View style={styles.loadingPage}>
@@ -122,7 +135,7 @@ export default function App() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="우리 집 관리"
-            onPress={() => setTab('household')}
+            onPress={() => leaveInvitation('household')}
             style={({ pressed }) => [
               styles.householdPill,
               tab === 'household' && styles.householdPillSelected,
@@ -141,16 +154,30 @@ export default function App() {
       </View>
 
       <View style={styles.content}>
-        {tab === 'home' && <HomeScreen session={session} />}
-        {tab === 'household' && <HouseholdScreen session={session} />}
-        {tab === 'receipts' && <ReceiptsScreen session={session} />}
-        {tab === 'fridge' && <FridgeScreen session={session} />}
-        {tab === 'supplies' && <SuppliesScreen session={session} />}
-        {tab === 'needs' && <NeedListScreen session={session} />}
-        {tab === 'subscriptions' && <SubscriptionsScreen session={session} />}
+        {activeInviteToken ? (
+          <InvitationAcceptScreen
+            session={session}
+            token={activeInviteToken}
+            onDone={(nextSession) => {
+              setSession(nextSession);
+              leaveInvitation('household');
+            }}
+            onCancel={() => leaveInvitation('home')}
+          />
+        ) : (
+          <>
+            {tab === 'home' && <HomeScreen session={session} />}
+            {tab === 'household' && <HouseholdScreen session={session} />}
+            {tab === 'receipts' && <ReceiptsScreen session={session} />}
+            {tab === 'fridge' && <FridgeScreen session={session} />}
+            {tab === 'supplies' && <SuppliesScreen session={session} />}
+            {tab === 'needs' && <NeedListScreen session={session} />}
+            {tab === 'subscriptions' && <SubscriptionsScreen session={session} />}
+          </>
+        )}
       </View>
 
-      <View style={styles.tabBar}>
+      {!activeInviteToken ? <View style={styles.tabBar}>
         {tabs.map((item) => {
           const selected = tab === item.key;
           return (
@@ -158,7 +185,7 @@ export default function App() {
               key={item.key}
               accessibilityRole="tab"
               accessibilityState={{ selected }}
-              onPress={() => setTab(item.key)}
+              onPress={() => leaveInvitation(item.key)}
               style={({ pressed }) => [styles.tab, selected && styles.tabSelected, pressed && styles.tabPressed]}
             >
               <Text style={[styles.tabMark, selected && styles.tabTextSelected]}>{item.mark}</Text>
@@ -166,7 +193,7 @@ export default function App() {
             </Pressable>
           );
         })}
-      </View>
+      </View> : null}
     </View>
   );
 }

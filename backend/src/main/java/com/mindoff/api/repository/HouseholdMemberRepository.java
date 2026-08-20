@@ -9,6 +9,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface HouseholdMemberRepository extends JpaRepository<HouseholdMember, UUID> {
     boolean existsByHouseholdIdAndUserId(UUID householdId, UUID userId);
     Optional<HouseholdMember> findByHouseholdIdAndUserId(UUID householdId, UUID userId);
-    Optional<HouseholdMember> findFirstByUserIdOrderByCreatedAtAsc(UUID userId);
+    Optional<HouseholdMember> findFirstByUserIdOrderByCreatedAtDesc(UUID userId);
     List<HouseholdMember> findAllByHouseholdIdOrderByCreatedAtAsc(UUID householdId);
 }
