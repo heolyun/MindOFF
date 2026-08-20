@@ -67,7 +67,14 @@ public class NeedListController {
             @PathVariable UUID itemId,
             @Valid @RequestBody CompleteNeedRequest request
     ) {
-        return needListService.complete(itemId, request.userId(), request.purchasedAt());
+        return needListService.complete(
+                itemId,
+                request.userId(),
+                request.purchasedAt(),
+                request.expiresAt(),
+                request.name(),
+                request.purchaseUrl()
+        );
     }
 
     public record AddNeedRequest(
@@ -77,6 +84,12 @@ public class NeedListController {
     ) {
     }
 
-    public record CompleteNeedRequest(@NotNull UUID userId, LocalDate purchasedAt) {
+    public record CompleteNeedRequest(
+            @NotNull UUID userId,
+            LocalDate purchasedAt,
+            LocalDate expiresAt,
+            @NotBlank @Size(max = 160) String name,
+            @Size(max = 1000) String purchaseUrl
+    ) {
     }
 }

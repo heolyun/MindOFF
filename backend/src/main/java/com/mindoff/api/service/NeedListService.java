@@ -28,7 +28,14 @@ public class NeedListService {
     }
 
     @Transactional
-    public NeedListItem complete(UUID itemId, UUID userId, LocalDate purchasedAt) {
+    public NeedListItem complete(
+            UUID itemId,
+            UUID userId,
+            LocalDate purchasedAt,
+            LocalDate expiresAt,
+            String name,
+            String purchaseUrl
+    ) {
         NeedListItem item = needListRepository.findById(itemId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "구매목록 품목을 찾을 수 없습니다."));
         accessService.requireMember(item.getHouseholdId(), userId);
@@ -39,7 +46,18 @@ public class NeedListService {
             inventoryService.repurchaseHouseholdItem(
                     item.getSourceId(),
                     userId,
-                    purchasedAt == null ? LocalDate.now() : purchasedAt
+                    purchasedAt == null ? LocalDate.now() : purchasedAt,
+                    name,
+                    purchaseUrl
+            );
+        }
+        if (item.getSourceType() == NeedSourceType.FRIDGE && item.getSourceId() != null) {
+            inventoryService.repurchaseFridgeItem(
+                    item.getSourceId(),
+                    userId,
+                    purchasedAt == null ? LocalDate.now() : purchasedAt,
+                    expiresAt,
+                    name
             );
         }
         item.complete();

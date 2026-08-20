@@ -33,6 +33,13 @@ type SubscriptionInput = {
   managementUrl: string;
 };
 
+export type CompleteNeedInput = {
+  name: string;
+  purchasedAt: string;
+  expiresAt: string | null;
+  purchaseUrl: string;
+};
+
 export type ReceiptUpload = {
   uri: string;
   fileName: string;
@@ -69,7 +76,7 @@ export type MindoffApi = {
   finishHouseholdItem(session: Session, itemId: string): Promise<HouseholdItem>;
   getNeeds(session: Session): Promise<NeedListItem[]>;
   addNeed(session: Session, name: string, purchaseUrl: string): Promise<NeedListItem>;
-  completeNeed(session: Session, itemId: string): Promise<NeedListItem>;
+  completeNeed(session: Session, itemId: string, input: CompleteNeedInput): Promise<NeedListItem>;
   getSubscriptions(session: Session): Promise<Subscription[]>;
   addSubscription(session: Session, input: SubscriptionInput): Promise<Subscription>;
   getReceipts(session: Session): Promise<ReceiptView[]>;
@@ -225,10 +232,10 @@ const remoteApi: MindoffApi = {
     });
   },
 
-  completeNeed(session, itemId) {
+  completeNeed(session, itemId, input) {
     return request(`/api/needs/${itemId}/complete`, {
       method: 'PATCH',
-      body: JSON.stringify({ userId: session.userId, purchasedAt: today() }),
+      body: JSON.stringify({ userId: session.userId, ...input, purchaseUrl: input.purchaseUrl || null }),
     });
   },
 
@@ -603,7 +610,7 @@ const demoApi: MindoffApi = {
     return item;
   },
 
-  async completeNeed(_session, itemId) {
+  async completeNeed(_session, itemId, input) {
     const store = readDemoStore();
     const item = required(store.needs.find((candidate) => candidate.id === itemId));
     if (item.status !== 'NEEDED') return item;
@@ -612,12 +619,22 @@ const demoApi: MindoffApi = {
       store.householdItems.unshift({
         id: createId(),
         householdId: demoSession.householdId,
-        name: previous.name,
-        purchasedAt: today(),
+        name: input.name,
+        purchasedAt: input.purchasedAt,
         finishedAt: null,
         predictedDays: previous.predictedDays,
         repeatPurchase: previous.repeatPurchase,
-        purchaseUrl: previous.purchaseUrl,
+        purchaseUrl: input.purchaseUrl || null,
+        status: 'ACTIVE',
+      });
+    } else if (item.sourceType === 'FRIDGE' && item.sourceId) {
+      const previous = required(store.fridge.find((candidate) => candidate.id === item.sourceId));
+      store.fridge.unshift({
+        id: createId(),
+        householdId: demoSession.householdId,
+        name: input.name || previous.name,
+        purchasedAt: input.purchasedAt,
+        expiresAt: input.expiresAt,
         status: 'ACTIVE',
       });
     }

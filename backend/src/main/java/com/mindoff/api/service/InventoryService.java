@@ -138,16 +138,51 @@ public class InventoryService {
 
     @Transactional
     public HouseholdItem repurchaseHouseholdItem(UUID previousItemId, UUID userId, LocalDate purchasedAt) {
+        return repurchaseHouseholdItem(previousItemId, userId, purchasedAt, null, null);
+    }
+
+    @Transactional
+    public HouseholdItem repurchaseHouseholdItem(
+            UUID previousItemId,
+            UUID userId,
+            LocalDate purchasedAt,
+            String name,
+            String purchaseUrl
+    ) {
         HouseholdItem previous = householdItemRepository.findById(previousItemId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "이전 생활용품을 찾을 수 없습니다."));
         accessService.requireMember(previous.getHouseholdId(), userId);
-        return addHouseholdItem(
+        HouseholdItem next = addHouseholdItem(
                 previous.getHouseholdId(),
                 userId,
-                previous.getName(),
+                name == null || name.isBlank() ? previous.getName() : name,
                 purchasedAt,
                 previous.isRepeatPurchase(),
-                previous.getPurchaseUrl()
+                purchaseUrl == null ? previous.getPurchaseUrl() : purchaseUrl
+        );
+        if (next.getPredictedDays() == null && previous.getPredictedDays() != null) {
+            next.applyPrediction(previous.getPredictedDays());
+        }
+        return next;
+    }
+
+    @Transactional
+    public FridgeItem repurchaseFridgeItem(
+            UUID previousItemId,
+            UUID userId,
+            LocalDate purchasedAt,
+            LocalDate expiresAt,
+            String name
+    ) {
+        FridgeItem previous = fridgeRepository.findById(previousItemId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "이전 냉장고 품목을 찾을 수 없습니다."));
+        accessService.requireMember(previous.getHouseholdId(), userId);
+        return addFridgeItem(
+                previous.getHouseholdId(),
+                userId,
+                name == null || name.isBlank() ? previous.getName() : name,
+                purchasedAt,
+                expiresAt
         );
     }
 }

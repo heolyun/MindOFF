@@ -198,15 +198,61 @@ class CoreFlowIntegrationTests {
         inventoryService.finishHouseholdItem(previous.getId(), user.getId(), true);
         var need = needListRepository.findAllByHouseholdIdOrderByCreatedAtDesc(household.getId()).getFirst();
 
-        needListService.complete(need.getId(), user.getId(), LocalDate.now());
+        needListService.complete(
+                need.getId(),
+                user.getId(),
+                LocalDate.now(),
+                null,
+                "친환경 주방세제",
+                "https://example.com/eco-detergent"
+        );
 
         List<HouseholdItem> items = householdItemRepository.findAllByHouseholdIdOrderByCreatedAtDesc(household.getId());
         assertThat(items).filteredOn(item -> item.getStatus() == HouseholdItemStatus.ACTIVE)
                 .singleElement()
                 .satisfies(item -> {
-                    assertThat(item.getName()).isEqualTo("주방세제");
+                    assertThat(item.getName()).isEqualTo("친환경 주방세제");
                     assertThat(item.getPredictedDays()).isEqualTo(20);
-                    assertThat(item.getPurchaseUrl()).isEqualTo("https://example.com/detergent");
+                    assertThat(item.getPurchaseUrl()).isEqualTo("https://example.com/eco-detergent");
+                });
+        assertThat(need.getStatus()).isEqualTo(NeedListStatus.PURCHASED);
+    }
+
+    @Test
+    void completingFridgeNeedCreatesANewActiveItem() {
+        BootstrapService.BootstrapResult bootstrap = bootstrapService.bootstrap(
+                "fridge-repurchase@mindoff.local",
+                "Fridge Owner",
+                "냉장고 재구매 집"
+        );
+        var user = bootstrap.user();
+        var household = bootstrap.household();
+        FridgeItem previous = inventoryService.addFridgeItem(
+                household.getId(),
+                user.getId(),
+                "우유",
+                LocalDate.now().minusDays(5),
+                LocalDate.now()
+        );
+        inventoryService.finishFridgeItem(previous.getId(), user.getId(), true);
+        var need = needListRepository.findAllByHouseholdIdOrderByCreatedAtDesc(household.getId()).getFirst();
+        LocalDate nextExpiry = LocalDate.now().plusDays(7);
+
+        needListService.complete(
+                need.getId(),
+                user.getId(),
+                LocalDate.now(),
+                nextExpiry,
+                "저지방 우유",
+                null
+        );
+
+        assertThat(fridgeRepository.findAllByHouseholdIdOrderByExpiresAtAsc(household.getId()))
+                .filteredOn(item -> item.getStatus().name().equals("ACTIVE"))
+                .singleElement()
+                .satisfies(item -> {
+                    assertThat(item.getName()).isEqualTo("저지방 우유");
+                    assertThat(item.getExpiresAt()).isEqualTo(nextExpiry);
                 });
         assertThat(need.getStatus()).isEqualTo(NeedListStatus.PURCHASED);
     }
