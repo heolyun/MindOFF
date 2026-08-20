@@ -1,5 +1,7 @@
 # MindOFF
 
+[![MindOFF CI](https://github.com/heolyun/MindOFF/actions/workflows/ci.yml/badge.svg)](https://github.com/heolyun/MindOFF/actions/workflows/ci.yml)
+
 > 내가 기억하지 않아도 되는 생활
 
 MindOFF는 영수증·냉장고·생활용품·구독처럼 잊기 쉬운 생활 정보를 대신 기억하고, 확인할 가치가 있는 순간에만 다음 행동을 제안하는 생활형 개인비서입니다.
@@ -74,13 +76,15 @@ pnpm typecheck
 
 백엔드 통합 테스트는 사용자·Household 부트스트랩, 냉장고 임박 항목, 생활용품 사용 완료, Need List 자동 추가, 구독 금액과 홈 요약 계산을 확인합니다.
 
-`.github/workflows/ci.yml`은 push와 pull request마다 백엔드 테스트, 모바일 타입 검사, Vercel용 웹 빌드를 실행합니다.
+`.github/workflows/ci.yml`은 push와 pull request마다 CloudFormation·배포 스크립트 검사, 백엔드 테스트·컨테이너 빌드, 모바일 타입 검사·Vercel용 웹 빌드를 실행합니다.
 
 ## Vercel 미리보기
 
 배포 주소: https://mindoff-project-preview.vercel.app
 
 Vercel 배포는 백엔드 없이도 화면과 상호작용을 확인할 수 있도록 브라우저 저장소 기반 Preview Data 모드로 빌드됩니다. 냉장고·생활용품·Need List·구독 변경 내용은 같은 브라우저에 저장됩니다.
+
+포트폴리오 확인 순서: 영수증 이미지 선택 → OCR 초안 수정·확정 → 냉장고/생활용품 반영 → 다 먹음/다 씀 → Need 재구매 완료 → 홈 요약 확인.
 
 ```powershell
 cd mobile
@@ -109,7 +113,7 @@ pnpm build:web:preview
 2. S3·Textract 실제 영수증 검증
 3. ECS Fargate·RDS 운영 배포와 Vercel API 연결
 4. EventBridge 기반 시간 확인과 모바일 Push
-5. Home 행동 연결과 Widget
+5. 모바일 Widget
 
 AWS 서비스는 기능 요구가 생기는 단계에서만 추가합니다. 초기 처리량이 작은 동안 SQS는 사용하지 않습니다.
 
@@ -122,4 +126,4 @@ AWS 서비스는 기능 요구가 생기는 단계에서만 추가합니다. 초
 - 비루트 사용자로 실행되는 운영 컨테이너
 - Cognito·S3·ECR·ECS IAM CloudFormation 기반 스택
 
-운영 변수는 `.env.production.example`, AWS 스택은 `infra/foundation.yml`과 `infra/backend.yml`을 참고합니다. 이 항목들은 배포 완료가 아니라 준비된 코드입니다.
+운영 변수는 `.env.production.example`, AWS 스택은 `infra/foundation.yml`과 `infra/backend.yml`을 참고합니다. 실제 작업 순서는 [AWS 배포 체크리스트](docs/AWS_DEPLOYMENT_CHECKLIST.md)에 정리되어 있습니다. 이 항목들은 배포 완료가 아니라 준비된 코드입니다.

@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +30,12 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api")
 public class ReceiptController {
+    private static final long MAX_RECEIPT_BYTES = 10L * 1024 * 1024;
+    private static final Set<String> SUPPORTED_IMAGE_TYPES = Set.of(
+            MediaType.IMAGE_JPEG_VALUE,
+            MediaType.IMAGE_PNG_VALUE
+    );
+
     private final ReceiptService receiptService;
 
     public ReceiptController(ReceiptService receiptService) {
@@ -48,17 +56,26 @@ public class ReceiptController {
     )
     public ReceiptService.ReceiptView intake(
             @PathVariable UUID householdId,
-            @RequestPart UUID userId,
+            @RequestParam UUID userId,
             @RequestPart MultipartFile file
     ) throws IOException {
         if (file.isEmpty()) {
             throw new IllegalArgumentException("영수증 이미지가 비어 있습니다.");
         }
+        if (file.getSize() > MAX_RECEIPT_BYTES) {
+            throw new IllegalArgumentException("영수증 이미지는 10MB 이하여야 합니다.");
+        }
+        String contentType = file.getContentType() == null
+                ? ""
+                : file.getContentType().toLowerCase(Locale.ROOT);
+        if (!SUPPORTED_IMAGE_TYPES.contains(contentType)) {
+            throw new IllegalArgumentException("JPG 또는 PNG 영수증 이미지만 업로드할 수 있습니다.");
+        }
         return receiptService.intake(
                 householdId,
                 userId,
                 file.getOriginalFilename(),
-                file.getContentType(),
+                contentType,
                 file.getBytes()
         );
     }

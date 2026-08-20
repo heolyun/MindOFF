@@ -28,7 +28,7 @@
 | Cognito | In Progress | CloudFormation과 앱 연동 코드만 준비 |
 | S3 | In Progress | 비공개 버킷 정의와 업로드 어댑터만 준비 |
 | Textract | In Progress | `AnalyzeExpense` 어댑터만 준비, 실계정 미검증 |
-| ECR/ECS/RDS | In Progress | 배포 스택과 컨테이너 준비, 실제 자원 없음 |
+| ECR/ECS/RDS | In Progress | 배포 스택, `linux/amd64` 이미지, 로컬 PostgreSQL 연동 검증 완료. 실제 자원 없음 |
 | Lambda | Planned | OCR 처리 방식 확정 후 구현 |
 | EventBridge Scheduler | Planned | 시간 기반 확인 작업 |
 | Push/SNS | Planned | 모바일 Push 전달 방식 확정 필요 |
@@ -51,6 +51,7 @@
 - [x] 생활용품 예상 소진일과 `아직 있어요` 보정
 - [x] 구독 월·연 결제와 Household 공유
 - [x] 홈 지표·확인 항목 행동 연결
+- [x] CloudFormation·배포 스크립트·운영 컨테이너 사전 검증
 - [ ] 실제 Cognito 가입·로그인 검증
 - [ ] 실제 S3·Textract 영수증 검증
 - [ ] Household 초대 이메일/딥링크
