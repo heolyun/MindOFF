@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 class TesseractReceiptParser {
+    private static final BigDecimal MAX_PLAUSIBLE_AMOUNT = new BigDecimal("10000000");
     private static final Pattern DATE_PATTERN = Pattern.compile("(20\\d{2})[./-](\\d{1,2})[./-](\\d{1,2})");
     private static final Pattern ADDRESS_PATTERN = Pattern.compile(
             ".*[\\p{L}\\d]{1,20}(?:로|길|동|리|읍|면)\\d{1,5}(?:-\\d{1,5})?.*"
@@ -31,7 +32,7 @@ class TesseractReceiptParser {
     );
     private static final List<String> NON_ITEM_LABELS = List.of(
             "합계", "총액", "소계", "결제", "승인", "카드", "현금", "거스름", "할인", "부가세", "과세", "면세",
-            "관세", "매출", "공급가액", "합계금액", "결제대금", "봉사료", "압계", "함계", "수랑금액",
+            "관세", "매출", "부가", "가액", "가맥", "번호", "공급가액", "합계금액", "결제대금", "봉사료", "압계", "함계", "수랑금액",
             "영수증", "사업자", "대표", "주소", "소재지", "사업장", "본점", "지점", "전화", "tel", "receipt", "total", "amount", "vat", "tax",
             "품명", "품목", "수량", "단가", "공급가", "판매금액", "바코드"
     );
@@ -167,7 +168,10 @@ class TesseractReceiptParser {
             String digits = text.replaceAll("[^0-9]", "");
             if (digits.isBlank() || digits.length() > 9) continue;
             try {
-                result.add(new AmountToken(new BigDecimal(digits), index));
+                BigDecimal value = new BigDecimal(digits);
+                if (value.compareTo(MAX_PLAUSIBLE_AMOUNT) <= 0) {
+                    result.add(new AmountToken(value, index));
+                }
             } catch (NumberFormatException ignored) {
             }
         }

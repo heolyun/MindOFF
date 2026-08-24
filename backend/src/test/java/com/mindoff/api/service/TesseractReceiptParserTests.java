@@ -104,6 +104,24 @@ class TesseractReceiptParserTests {
     }
 
     @Test
+    void filtersObservedOcrVariantsOfReceiptSummaryFields() {
+        String text = """
+                현 대 백 화 점 상품 10,000
+                가 맥 9,091
+                부 가 Al 909
+                숨 민 번호 193456789
+                """;
+
+        ReceiptOcrGateway.OcrDraft draft = parser.parse(text);
+
+        assertThat(draft.lines()).singleElement()
+                .satisfies(line -> {
+                    assertThat(line.name()).isEqualTo("현 대 백 화 점 상품");
+                    assertThat(line.lineTotal()).isEqualByComparingTo("10000");
+                });
+    }
+
+    @Test
     void separatesQuantityUnitPriceAndTotalUsingWordColumns() {
         TesseractDocument document = new TesseractDocument(4, List.of(new TesseractDocument.Line(List.of(
                 word("삼겹살", 20, 91),
