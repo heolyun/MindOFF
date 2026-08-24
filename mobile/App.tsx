@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { API_BASE_URL, api, setAccessToken, setAccessTokenRefresher } from './src/api';
-import { AUTH_MODE, refreshAccessToken, restoreAccessToken, signInWithCognito, signOut } from './src/auth';
+import { AUTH_MODE, refreshAccessToken, restoreAccessToken, signOut } from './src/auth';
 import { clearInviteFromWebUrl, inviteTokenFromUrl } from './src/inviteLinks';
+import { AuthScreen } from './src/screens/AuthScreen';
 import { FridgeScreen } from './src/screens/FridgeScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { HouseholdScreen } from './src/screens/HouseholdScreen';
@@ -35,7 +36,6 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('home');
   const [error, setError] = useState<string | null>(null);
   const [needsLogin, setNeedsLogin] = useState(false);
-  const [signingIn, setSigningIn] = useState(false);
   const [dismissedInviteToken, setDismissedInviteToken] = useState<string | null>(null);
   const activeInviteToken = linkedInviteToken === dismissedInviteToken ? null : linkedInviteToken;
 
@@ -65,19 +65,11 @@ export default function App() {
     };
   }, []);
 
-  async function login() {
-    setSigningIn(true);
+  async function login(token: string) {
     setError(null);
-    try {
-      const token = await signInWithCognito();
-      setAccessToken(token);
-      setSession(await api.bootstrap());
-      setNeedsLogin(false);
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : '로그인에 실패했습니다.');
-    } finally {
-      setSigningIn(false);
-    }
+    setAccessToken(token);
+    setSession(await api.bootstrap());
+    setNeedsLogin(false);
   }
 
   async function logout() {
@@ -94,6 +86,10 @@ export default function App() {
     setTab(nextTab);
   }
 
+  if (!session && needsLogin) {
+    return <AuthScreen onAuthenticated={login} />;
+  }
+
   if (!session) {
     return (
       <View style={styles.loadingPage}>
@@ -102,15 +98,7 @@ export default function App() {
           <Text style={styles.wordmark}>MindOFF</Text>
           <View style={styles.dot} />
         </View>
-        {needsLogin ? (
-          <View style={styles.connectionCard}>
-            <Text style={styles.connectionTitle}>로그인</Text>
-            {error ? <Text style={styles.connectionBody}>{error}</Text> : null}
-            <Pressable accessibilityRole="button" onPress={() => void login()} disabled={signingIn} style={styles.loginButton}>
-              <Text style={styles.loginButtonText}>{signingIn ? '연결 중…' : 'MindOFF 시작'}</Text>
-            </Pressable>
-          </View>
-        ) : error ? (
+        {error ? (
           <View style={styles.connectionCard}>
             <Text style={styles.connectionTitle}>백엔드 연결이 필요해요</Text>
             <Text style={styles.connectionBody}>{error}</Text>
@@ -251,6 +239,4 @@ const styles = StyleSheet.create({
   connectionTitle: { color: colors.danger, fontSize: 18, fontWeight: '800' },
   connectionBody: { color: colors.muted, fontSize: 14, lineHeight: 21, textAlign: 'center' },
   connectionHint: { color: colors.danger, fontSize: 12, fontWeight: '700' },
-  loginButton: { minHeight: 48, borderRadius: 14, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
-  loginButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '800' },
 });

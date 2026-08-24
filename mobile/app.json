@@ -31,7 +31,6 @@
           "microphonePermission": false
         }
       ],
-      "expo-web-browser",
       "expo-secure-store"
     ]
   }

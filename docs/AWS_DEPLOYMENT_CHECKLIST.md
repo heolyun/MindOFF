@@ -50,6 +50,7 @@ docker compose down
 
 - [x] `https://d1fq2tsi4ud0ut.cloudfront.net/actuator/health/readiness`가 `UP`
 - [x] Vercel 운영 번들에서 AWS API·Cognito 설정과 CORS 확인
+- [x] Cognito 관리형 화면 없이 MindOFF 가입·인증·로그인·재설정 화면 연결
 - [ ] Cognito 회원가입·로그인·토큰 갱신·로그아웃
 - [ ] Household 생성, 초대 링크 수락, 구성원 공유 데이터 확인
 - [ ] JPG/PNG 영수증 업로드, S3 저장, Textract 초안, 최종 확정
@@ -73,4 +74,4 @@ EXPO_PUBLIC_COGNITO_CLIENT_ID=<public-app-client-id>
 - 완전 삭제가 필요하면 보존할 데이터와 스냅샷을 먼저 결정한 뒤 삭제 보호를 직접 해제합니다.
 - 비용 확인 없이 실패한 스택이나 고정 비용 자원을 방치하지 않습니다.
 
-현재 상태: AWS 운영 백엔드와 Vercel 운영 화면의 연결을 완료했습니다. CloudFront HTTPS, CORS, Cognito OIDC·Hosted UI 진입이 정상입니다. 실제 사용자 가입·로그인과 영수증 OCR 검증이 다음 작업입니다.
+현재 상태: AWS 운영 백엔드와 Vercel 운영 화면의 연결을 완료했습니다. CloudFront HTTPS, CORS, Cognito 직접 인증 API가 정상입니다. 실제 사용자 이메일 인증과 영수증 OCR 검증이 다음 작업입니다.

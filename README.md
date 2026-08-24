@@ -18,10 +18,10 @@ MindOFF는 영수증·냉장고·생활용품·구독처럼 잊기 쉬운 생활
 - 사용주기 기록, 최근 기록 가중 예측, 구매 완료 후 새 주기 시작
 - 생활용품 예상 소진일 보정과 구독 월·연 결제·Household 공유
 - 유통기한·사용주기·무료체험 Attention과 홈 요약
-- Cognito JWT·토큰 갱신·로그아웃 코드
+- MindOFF 이메일 가입·인증·로그인·재설정과 Cognito JWT
 - S3·Textract 어댑터와 ECS/RDS 배포 템플릿
 
-Cognito, S3, ECR, ECS Fargate, RDS, ALB, CloudFront 자원을 AWS 서울 리전에 배포했습니다. 운영 API는 `https://d1fq2tsi4ud0ut.cloudfront.net`이며, Vercel 화면은 아직 Preview Data 모드를 사용합니다. 로컬 기본 설정은 샘플 OCR을 사용합니다. 상세 상태는 [MVP 구현 상태](docs/MVP_STATUS.md)를 기준으로 관리합니다.
+Cognito, S3, ECR, ECS Fargate, RDS, ALB, CloudFront 자원을 AWS 서울 리전에 배포했습니다. Vercel 운영 화면은 실제 API와 Cognito를 사용합니다. 로컬 기본 설정은 샘플 OCR입니다. 상세 상태는 [MVP 구현 상태](docs/MVP_STATUS.md)를 기준으로 관리합니다.
 
 ## 구성
 
@@ -82,7 +82,7 @@ pnpm typecheck
 
 배포 주소: https://mindoff-project-preview.vercel.app
 
-Vercel 운영 배포는 AWS API와 Cognito를 사용합니다. 로그인 전까지는 Cognito 회원가입 또는 로그인이 필요합니다.
+Vercel 운영 배포는 AWS API와 Cognito를 사용합니다. 가입·인증·로그인은 MindOFF 화면 안에서 처리합니다.
 
 포트폴리오 확인 순서: 영수증 이미지 선택 → OCR 초안 수정·확정 → 냉장고/생활용품 반영 → 다 먹음/다 씀 → Need 재구매 완료 → 홈 요약 확인.
 
@@ -119,7 +119,7 @@ AWS 서비스는 기능 요구가 생기는 단계에서만 추가합니다. 초
 ## 서비스화 준비 코드
 
 - Cognito JWT 검증과 인증 사용자 세션
-- Expo AuthSession PKCE 로그인과 토큰 보관
+- Cognito 직접 가입·인증·로그인·재설정과 토큰 보관
 - 비공개 S3 저장 및 Textract `AnalyzeExpense` OCR
 - 개발·미리보기·운영 환경 분리
 - 비루트 사용자로 실행되는 운영 컨테이너
