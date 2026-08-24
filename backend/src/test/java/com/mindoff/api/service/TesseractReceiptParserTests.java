@@ -70,6 +70,23 @@ class TesseractReceiptParserTests {
     }
 
     @Test
+    void filtersSpacedAndMisrecognizedSummaryLines() {
+        String text = """
+                압 계 수 랑 / 금 액 18,039
+                관세 매출 8,436
+                생수 790
+                """;
+
+        ReceiptOcrGateway.OcrDraft draft = parser.parse(text);
+
+        assertThat(draft.lines()).singleElement()
+                .satisfies(line -> {
+                    assertThat(line.name()).isEqualTo("생수");
+                    assertThat(line.lineTotal()).isEqualByComparingTo("790");
+                });
+    }
+
+    @Test
     void separatesQuantityUnitPriceAndTotalUsingWordColumns() {
         TesseractDocument document = new TesseractDocument(4, List.of(new TesseractDocument.Line(List.of(
                 word("삼겹살", 20, 91),

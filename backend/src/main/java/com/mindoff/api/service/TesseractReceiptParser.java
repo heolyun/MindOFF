@@ -27,6 +27,7 @@ class TesseractReceiptParser {
     );
     private static final List<String> NON_ITEM_LABELS = List.of(
             "합계", "총액", "소계", "결제", "승인", "카드", "현금", "거스름", "할인", "부가세", "과세", "면세",
+            "관세", "매출", "공급가액", "합계금액", "결제대금", "봉사료", "압계", "함계", "수랑금액",
             "영수증", "사업자", "대표", "주소", "전화", "tel", "receipt", "total", "amount", "vat", "tax",
             "품명", "품목", "수량", "단가", "공급가", "판매금액", "바코드"
     );
@@ -75,10 +76,9 @@ class TesseractReceiptParser {
         for (int index = 0; index < Math.min(lines.size(), 10); index++) {
             TesseractDocument.Line line = lines.get(index);
             String text = cleanName(line.text());
-            String lower = text.toLowerCase(Locale.ROOT);
             int letters = letterCount(text);
             if (letters < 2 || text.length() > 40) continue;
-            if (DATE_PATTERN.matcher(text).find() || containsAny(lower, NON_ITEM_LABELS)) continue;
+            if (DATE_PATTERN.matcher(text).find() || isNonItemText(text)) continue;
             if (numericTokenCount(line.words()) > 0) continue;
             double readableRatio = (double) letters / Math.max(text.replace(" ", "").length(), 1);
             if (readableRatio < 0.6 || line.averageConfidence() < 35) continue;
@@ -94,8 +94,7 @@ class TesseractReceiptParser {
         List<ReceiptOcrGateway.OcrLine> items = new ArrayList<>();
         for (TesseractDocument.Line line : lines) {
             String text = line.text();
-            String lower = text.toLowerCase(Locale.ROOT);
-            if (line.averageConfidence() < 25 || containsAny(lower, NON_ITEM_LABELS) || DATE_PATTERN.matcher(text).find()) {
+            if (line.averageConfidence() < 25 || isNonItemText(text) || DATE_PATTERN.matcher(text).find()) {
                 continue;
             }
 
@@ -111,7 +110,7 @@ class TesseractReceiptParser {
                     .map(TesseractDocument.Word::text)
                     .reduce((left, right) -> left + " " + right)
                     .orElse(""));
-            if (letterCount(name) < 2 || name.length() > 50 || containsAny(name.toLowerCase(Locale.ROOT), NON_ITEM_LABELS)) {
+            if (letterCount(name) < 2 || name.length() > 50 || isNonItemText(name)) {
                 continue;
             }
 
@@ -202,6 +201,12 @@ class TesseractReceiptParser {
             if (value.contains(candidate)) return true;
         }
         return false;
+    }
+
+    private static boolean isNonItemText(String value) {
+        String lower = value.toLowerCase(Locale.ROOT);
+        String compact = lower.replaceAll("[^\\p{L}\\p{N}]", "");
+        return containsAny(lower, NON_ITEM_LABELS) || containsAny(compact, NON_ITEM_LABELS);
     }
 
     private record AmountToken(BigDecimal value, int wordIndex) {
