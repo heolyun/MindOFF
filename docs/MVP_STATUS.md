@@ -25,10 +25,10 @@
 
 | 영역 | 상태 | 비고 |
 | --- | --- | --- |
-| Cognito | In Progress | CloudFormation과 앱 연동 코드만 준비 |
-| S3 | In Progress | 비공개 버킷 정의와 업로드 어댑터만 준비 |
+| Cognito | In Progress | 실제 User Pool·도메인·클라이언트 배포 완료, 가입·로그인 검증 필요 |
+| S3 | In Progress | 실제 비공개 영수증 버킷 배포 완료, 앱 업로드 검증 필요 |
 | Textract | In Progress | `AnalyzeExpense` 어댑터만 준비, 실계정 미검증 |
-| ECR/ECS/RDS | In Progress | 배포 스택, `linux/amd64` 이미지, 로컬 PostgreSQL 연동 검증 완료. 실제 자원 없음 |
+| ECR/ECS/RDS | Implemented | 서울 리전 운영 스택 배포, DB 마이그레이션, ECS steady state, CloudFront HTTPS readiness 검증 완료 |
 | Lambda | Planned | OCR 처리 방식 확정 후 구현 |
 | EventBridge Scheduler | Planned | 시간 기반 확인 작업 |
 | Push/SNS | Planned | 모바일 Push 전달 방식 확정 필요 |
@@ -57,6 +57,6 @@
 - [ ] Household 초대 이메일/딥링크
 - [ ] EventBridge 기반 확인 작업
 - [ ] 모바일 Push
-- [ ] ECS/RDS 운영 배포
+- [x] ECS/RDS 운영 배포
 
-마지막 업데이트: 2026-08-20
+마지막 업데이트: 2026-08-24

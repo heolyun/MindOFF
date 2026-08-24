@@ -8,7 +8,7 @@ MindOFF는 영수증·냉장고·생활용품·구독처럼 잊기 쉬운 생활
 
 ## 현재 구현 범위
 
-현재 제품은 로컬 API와 Vercel Preview Data 모드에서 핵심 흐름을 검증하는 MVP 초안입니다.
+현재 제품은 로컬 API와 Vercel Preview Data 모드에서 핵심 흐름을 검증하고, AWS 운영 백엔드까지 배포한 MVP 초안입니다.
 
 - Expo TypeScript 앱, Spring Boot API, PostgreSQL, Docker Compose
 - 냉장고·생활용품·Need List·구독 기본 흐름
@@ -21,7 +21,7 @@ MindOFF는 영수증·냉장고·생활용품·구독처럼 잊기 쉬운 생활
 - Cognito JWT·토큰 갱신·로그아웃 코드
 - S3·Textract 어댑터와 ECS/RDS 배포 템플릿
 
-Cognito, S3, Textract, ECS, RDS 등 AWS 자원은 아직 생성되지 않았습니다. 로컬 기본 설정은 샘플 OCR을 사용합니다. 상세 상태는 [MVP 구현 상태](docs/MVP_STATUS.md)를 기준으로 관리합니다.
+Cognito, S3, ECR, ECS Fargate, RDS, ALB, CloudFront 자원을 AWS 서울 리전에 배포했습니다. 운영 API는 `https://d1fq2tsi4ud0ut.cloudfront.net`이며, Vercel 화면은 아직 Preview Data 모드를 사용합니다. 로컬 기본 설정은 샘플 OCR을 사용합니다. 상세 상태는 [MVP 구현 상태](docs/MVP_STATUS.md)를 기준으로 관리합니다.
 
 ## 구성
 
@@ -111,7 +111,7 @@ pnpm build:web:preview
 
 1. 실제 Cognito 가입·로그인과 Household 초대 전달
 2. S3·Textract 실제 영수증 검증
-3. ECS Fargate·RDS 운영 배포와 Vercel API 연결
+3. Vercel 운영 환경을 AWS API·Cognito에 연결
 4. EventBridge 기반 시간 확인과 모바일 Push
 5. 모바일 Widget
 
@@ -126,4 +126,4 @@ AWS 서비스는 기능 요구가 생기는 단계에서만 추가합니다. 초
 - 비루트 사용자로 실행되는 운영 컨테이너
 - Cognito·S3·ECR·ECS IAM CloudFormation 기반 스택
 
-운영 변수는 `.env.production.example`, AWS 스택은 `infra/foundation.yml`과 `infra/backend.yml`을 참고합니다. 실제 작업 순서는 [AWS 배포 체크리스트](docs/AWS_DEPLOYMENT_CHECKLIST.md)에 정리되어 있습니다. 이 항목들은 배포 완료가 아니라 준비된 코드입니다.
+운영 변수는 `.env.production.example`, AWS 스택은 `infra/foundation.yml`과 `infra/backend.yml`을 참고합니다. 실제 작업 순서와 현재 배포 상태는 [AWS 배포 체크리스트](docs/AWS_DEPLOYMENT_CHECKLIST.md)에 정리되어 있습니다.

@@ -21,14 +21,14 @@ docker compose down
 
 ## 2. 배포 직전
 
-- [ ] AWS 루트 계정 MFA 복구 완료
-- [ ] AWS CLI에서 배포용 계정 확인: `aws sts get-caller-identity`
-- [ ] 기본 리전 `ap-northeast-2` 확인
-- [ ] Billing 예산과 비용 알림을 먼저 설정
-- [ ] Free 플랜이면 RDS 자동 백업 보관 기간을 1일로 유지
-- [ ] 고유한 Cognito 도메인 접두사 결정
-- [ ] Vercel 운영 주소와 CORS 허용 주소 일치 확인
-- [ ] 저장소나 GitHub Actions에 AWS 비밀키·DB 비밀번호가 없는지 확인
+- [x] AWS 루트 계정 MFA 복구 완료
+- [x] AWS CLI에서 배포 계정 확인: `499989195406`
+- [x] 기본 리전 `ap-northeast-2` 확인
+- [x] 월 `$10` Billing 예산과 50%·80%·100% 알림 설정
+- [x] Free 플랜 RDS 자동 백업 보관 기간 1일 적용
+- [x] 고유한 Cognito 도메인 접두사 적용
+- [x] Vercel 운영 주소와 CORS 허용 주소 일치 확인
+- [x] 저장소와 GitHub Actions에 AWS 비밀키·DB 비밀번호가 없는지 확인
 
 비용이 계속 발생하는 핵심 자원은 RDS, Fargate, ALB입니다. 학습·포트폴리오 확인이 끝나면 유지할 자원과 삭제할 자원을 바로 결정합니다.
 
@@ -48,12 +48,12 @@ docker compose down
 
 ## 4. 배포 직후 확인
 
-- [ ] `https://<api-domain>/actuator/health/readiness`가 `UP`
+- [x] `https://d1fq2tsi4ud0ut.cloudfront.net/actuator/health/readiness`가 `UP`
 - [ ] Cognito 회원가입·로그인·토큰 갱신·로그아웃
 - [ ] Household 생성, 초대 링크 수락, 구성원 공유 데이터 확인
 - [ ] JPG/PNG 영수증 업로드, S3 저장, Textract 초안, 최종 확정
 - [ ] 냉장고·생활용품·Need List·공유 구독의 저장과 재조회
-- [ ] ECS 로그에 인증·DB·OCR 오류가 없는지 확인
+- [x] ECS 로그에서 Spring Boot 기동, PostgreSQL 연결, Flyway V1~V5 적용 확인
 
 기능 확인이 끝나면 Vercel 운영 환경 변수에 API와 Cognito 값을 반영하고 다시 배포합니다.
 
@@ -72,4 +72,4 @@ EXPO_PUBLIC_COGNITO_CLIENT_ID=<public-app-client-id>
 - 완전 삭제가 필요하면 보존할 데이터와 스냅샷을 먼저 결정한 뒤 삭제 보호를 직접 해제합니다.
 - 비용 확인 없이 실패한 스택이나 고정 비용 자원을 방치하지 않습니다.
 
-현재 상태: AWS 자원 생성만 계정 복구를 기다리고 있으며, 로컬 전체 구동과 배포 전 검증은 완료했습니다.
+현재 상태: AWS Free 플랜이 활성화된 계정에 운영 백엔드 배포를 완료했습니다. CloudFormation 두 스택, ECS 작업, RDS 연결, CloudFront HTTPS readiness가 정상입니다. Vercel의 AWS API·Cognito 연결과 실제 회원가입·OCR 흐름 검증이 다음 작업입니다.
