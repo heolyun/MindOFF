@@ -87,6 +87,23 @@ class TesseractReceiptParserTests {
     }
 
     @Test
+    void filtersAddressLinesWithoutRemovingLocationNamedProducts() {
+        String text = """
+                서울특별시 강남구 테헤란로 123 8,436
+                경기도 성남시 분당구 판교역로 166 18,039
+                서울우유 2,900
+                """;
+
+        ReceiptOcrGateway.OcrDraft draft = parser.parse(text);
+
+        assertThat(draft.lines()).singleElement()
+                .satisfies(line -> {
+                    assertThat(line.name()).isEqualTo("서울우유");
+                    assertThat(line.lineTotal()).isEqualByComparingTo("2900");
+                });
+    }
+
+    @Test
     void separatesQuantityUnitPriceAndTotalUsingWordColumns() {
         TesseractDocument document = new TesseractDocument(4, List.of(new TesseractDocument.Line(List.of(
                 word("삼겹살", 20, 91),

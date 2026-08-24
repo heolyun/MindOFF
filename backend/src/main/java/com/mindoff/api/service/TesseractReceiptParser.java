@@ -17,6 +17,10 @@ import org.springframework.stereotype.Component;
 @Component
 class TesseractReceiptParser {
     private static final Pattern DATE_PATTERN = Pattern.compile("(20\\d{2})[./-](\\d{1,2})[./-](\\d{1,2})");
+    private static final Pattern ADDRESS_PATTERN = Pattern.compile(
+            ".*[\\p{L}\\d]{1,20}(?:로|길|동|리|읍|면)\\d{1,5}(?:-\\d{1,5})?.*"
+    );
+    private static final Pattern PHONE_PATTERN = Pattern.compile(".*0\\d{1,2}[-)]?\\d{3,4}-?\\d{4}.*");
     private static final List<DateTimeFormatter> DATE_FORMATS = List.of(
             DateTimeFormatter.ISO_LOCAL_DATE,
             DateTimeFormatter.ofPattern("yyyy.M.d"),
@@ -28,7 +32,7 @@ class TesseractReceiptParser {
     private static final List<String> NON_ITEM_LABELS = List.of(
             "합계", "총액", "소계", "결제", "승인", "카드", "현금", "거스름", "할인", "부가세", "과세", "면세",
             "관세", "매출", "공급가액", "합계금액", "결제대금", "봉사료", "압계", "함계", "수랑금액",
-            "영수증", "사업자", "대표", "주소", "전화", "tel", "receipt", "total", "amount", "vat", "tax",
+            "영수증", "사업자", "대표", "주소", "소재지", "사업장", "본점", "지점", "전화", "tel", "receipt", "total", "amount", "vat", "tax",
             "품명", "품목", "수량", "단가", "공급가", "판매금액", "바코드"
     );
 
@@ -206,7 +210,10 @@ class TesseractReceiptParser {
     private static boolean isNonItemText(String value) {
         String lower = value.toLowerCase(Locale.ROOT);
         String compact = lower.replaceAll("[^\\p{L}\\p{N}]", "");
-        return containsAny(lower, NON_ITEM_LABELS) || containsAny(compact, NON_ITEM_LABELS);
+        return containsAny(lower, NON_ITEM_LABELS)
+                || containsAny(compact, NON_ITEM_LABELS)
+                || ADDRESS_PATTERN.matcher(compact).matches()
+                || PHONE_PATTERN.matcher(compact).matches();
     }
 
     private record AmountToken(BigDecimal value, int wordIndex) {
