@@ -55,7 +55,12 @@ export async function refreshAccessToken(): Promise<string | null> {
       ClientId: clientId,
       AuthParameters: { REFRESH_TOKEN: current.refreshToken },
     });
-    const stored = storedTokens(response.AuthenticationResult, current.refreshToken, current.idToken);
+    const stored = storedTokens(
+      response.AuthenticationResult,
+      current.refreshToken,
+      current.idToken,
+      current.rememberLogin,
+    );
     await saveTokens(stored);
     return stored.accessToken;
   } catch {
@@ -64,7 +69,11 @@ export async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
-export async function signInWithCognito(email: string, password: string): Promise<string> {
+export async function signInWithCognito(
+  email: string,
+  password: string,
+  rememberLogin = false,
+): Promise<string> {
   requireConfiguration();
   const response = await cognitoRequest<InitiateAuthResponse>('InitiateAuth', {
     AuthFlow: 'USER_PASSWORD_AUTH',
@@ -77,7 +86,7 @@ export async function signInWithCognito(email: string, password: string): Promis
   if (response.ChallengeName) {
     throw new CognitoAuthError(response.ChallengeName, '추가 인증이 필요합니다.');
   }
-  const stored = storedTokens(response.AuthenticationResult);
+  const stored = storedTokens(response.AuthenticationResult, undefined, undefined, rememberLogin);
   await saveTokens(stored);
   return stored.accessToken;
 }
@@ -161,6 +170,7 @@ function storedTokens(
   result: AuthenticationResult | undefined,
   fallbackRefreshToken?: string,
   fallbackIdToken?: string,
+  rememberLogin = false,
 ): StoredTokens {
   if (!result?.AccessToken) {
     throw new CognitoAuthError('MissingAuthenticationResult', '로그인 정보를 받지 못했습니다.');
@@ -170,6 +180,7 @@ function storedTokens(
     refreshToken: result.RefreshToken ?? fallbackRefreshToken,
     idToken: result.IdToken ?? fallbackIdToken,
     expiresAt: Date.now() + (result.ExpiresIn ?? 3600) * 1000,
+    rememberLogin,
   };
 }
 

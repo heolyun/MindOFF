@@ -21,6 +21,9 @@ export function AuthScreen({ onAuthenticated }: { onAuthenticated: (token: strin
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [code, setCode] = useState('');
+  const [rememberLogin, setRememberLogin] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [passwordConfirmVisible, setPasswordConfirmVisible] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -29,6 +32,8 @@ export function AuthScreen({ onAuthenticated }: { onAuthenticated: (token: strin
     setMode(nextMode);
     setCode('');
     setPasswordConfirm('');
+    setPasswordVisible(false);
+    setPasswordConfirmVisible(false);
     setError(null);
     setNotice(null);
   }
@@ -36,7 +41,7 @@ export function AuthScreen({ onAuthenticated }: { onAuthenticated: (token: strin
   async function submitSignIn() {
     await run(async () => {
       try {
-        const token = await signInWithCognito(email, password);
+        const token = await signInWithCognito(email, password, rememberLogin);
         await onAuthenticated(token);
       } catch (reason) {
         if (reason instanceof CognitoAuthError && reason.code === 'UserNotConfirmedException') {
@@ -57,7 +62,7 @@ export function AuthScreen({ onAuthenticated }: { onAuthenticated: (token: strin
     await run(async () => {
       const confirmed = await signUpWithCognito(email, password, name);
       if (confirmed) {
-        const token = await signInWithCognito(email, password);
+        const token = await signInWithCognito(email, password, rememberLogin);
         await onAuthenticated(token);
         return;
       }
@@ -69,7 +74,7 @@ export function AuthScreen({ onAuthenticated }: { onAuthenticated: (token: strin
   async function submitConfirmation() {
     await run(async () => {
       await confirmSignUp(email, code);
-      const token = await signInWithCognito(email, password);
+      const token = await signInWithCognito(email, password, rememberLogin);
       await onAuthenticated(token);
     });
   }
@@ -166,11 +171,32 @@ export function AuthScreen({ onAuthenticated }: { onAuthenticated: (token: strin
               label="비밀번호"
               value={password}
               onChangeText={setPassword}
-              secureTextEntry
+              secureTextEntry={!passwordVisible}
               autoComplete={mode === 'sign-up' ? 'new-password' : 'current-password'}
               textContentType={mode === 'sign-up' ? 'newPassword' : 'password'}
               editable={!busy}
+              rightAction={{
+                label: passwordVisible ? '숨기기' : '보기',
+                accessibilityLabel: passwordVisible ? '비밀번호 숨기기' : '비밀번호 보기',
+                onPress: () => setPasswordVisible((visible) => !visible),
+              }}
             />
+          ) : null}
+
+          {mode === 'sign-in' ? (
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: rememberLogin, disabled: busy }}
+              aria-checked={rememberLogin}
+              disabled={busy}
+              onPress={() => setRememberLogin((remember) => !remember)}
+              style={({ pressed }) => [styles.rememberRow, pressed && styles.rememberPressed]}
+            >
+              <View style={[styles.checkbox, rememberLogin && styles.checkboxChecked]}>
+                {rememberLogin ? <Text style={styles.checkmark}>✓</Text> : null}
+              </View>
+              <Text style={styles.rememberLabel}>로그인 유지</Text>
+            </Pressable>
           ) : null}
 
           {mode === 'sign-up' || mode === 'reset' ? (
@@ -191,20 +217,30 @@ export function AuthScreen({ onAuthenticated }: { onAuthenticated: (token: strin
                   label="새 비밀번호"
                   value={password}
                   onChangeText={setPassword}
-                  secureTextEntry
+                  secureTextEntry={!passwordVisible}
                   autoComplete="new-password"
                   textContentType="newPassword"
                   editable={!busy}
+                  rightAction={{
+                    label: passwordVisible ? '숨기기' : '보기',
+                    accessibilityLabel: passwordVisible ? '새 비밀번호 숨기기' : '새 비밀번호 보기',
+                    onPress: () => setPasswordVisible((visible) => !visible),
+                  }}
                 />
               ) : null}
               <TextField
                 label="비밀번호 확인"
                 value={passwordConfirm}
                 onChangeText={setPasswordConfirm}
-                secureTextEntry
+                secureTextEntry={!passwordConfirmVisible}
                 autoComplete="new-password"
                 textContentType="newPassword"
                 editable={!busy}
+                rightAction={{
+                  label: passwordConfirmVisible ? '숨기기' : '보기',
+                  accessibilityLabel: passwordConfirmVisible ? '비밀번호 확인 숨기기' : '비밀번호 확인 보기',
+                  onPress: () => setPasswordConfirmVisible((visible) => !visible),
+                }}
               />
               <Text style={styles.rule}>10자 이상 · 대문자 · 소문자 · 숫자</Text>
             </>
@@ -308,6 +344,12 @@ const styles = StyleSheet.create({
   rule: { color: colors.muted, fontSize: 12, lineHeight: 18 },
   notice: { color: colors.ink, backgroundColor: colors.mint, borderRadius: 12, padding: 12, fontSize: 13 },
   error: { color: colors.danger, backgroundColor: '#F9E6E2', borderRadius: 12, padding: 12, fontSize: 13 },
+  rememberRow: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 34 },
+  rememberPressed: { opacity: 0.6 },
+  checkbox: { width: 20, height: 20, borderRadius: 6, borderWidth: 1, borderColor: colors.line, backgroundColor: '#FBFCFB', alignItems: 'center', justifyContent: 'center' },
+  checkboxChecked: { borderColor: colors.ink, backgroundColor: colors.ink },
+  checkmark: { color: '#FFFFFF', fontSize: 13, lineHeight: 16, fontWeight: '900' },
+  rememberLabel: { color: colors.ink, fontSize: 13, fontWeight: '700' },
   links: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 18, paddingTop: 2 },
   link: { color: colors.ink, fontSize: 13, fontWeight: '700' },
   linkPressed: { opacity: 0.55 },

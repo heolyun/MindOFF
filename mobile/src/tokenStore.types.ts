@@ -3,4 +3,5 @@ export type StoredTokens = {
   refreshToken?: string;
   idToken?: string;
   expiresAt: number;
+  rememberLogin?: boolean;
 };

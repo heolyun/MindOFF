@@ -46,16 +46,39 @@ export function Card({ children }: PropsWithChildren) {
   return <View style={styles.card}>{children}</View>;
 }
 
-export function TextField({ label, ...props }: TextInputProps & { label: string }) {
+type TextFieldProps = TextInputProps & {
+  label: string;
+  rightAction?: {
+    label: string;
+    accessibilityLabel: string;
+    onPress: () => void;
+  };
+};
+
+export function TextField({ label, rightAction, ...props }: TextFieldProps) {
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput
-        placeholderTextColor="#9AA7A2"
-        style={styles.input}
-        autoCapitalize="none"
-        {...props}
-      />
+      <View style={styles.inputRow}>
+        <TextInput
+          placeholderTextColor="#9AA7A2"
+          style={[styles.input, rightAction ? styles.inputWithAction : null]}
+          autoCapitalize="none"
+          {...props}
+        />
+        {rightAction ? (
+          <Pressable
+            accessibilityLabel={rightAction.accessibilityLabel}
+            accessibilityRole="button"
+            disabled={props.editable === false}
+            onPress={rightAction.onPress}
+            hitSlop={8}
+            style={({ pressed }) => [styles.inputAction, pressed && styles.inputActionPressed]}
+          >
+            <Text style={styles.inputActionText}>{rightAction.label}</Text>
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -145,6 +168,7 @@ export const styles = StyleSheet.create({
   },
   field: { gap: 7 },
   fieldLabel: { color: colors.ink, fontSize: 13, fontWeight: '700' },
+  inputRow: { position: 'relative', justifyContent: 'center' },
   input: {
     minHeight: 48,
     borderWidth: 1,
@@ -155,6 +179,10 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FBFCFB',
     fontSize: 15,
   },
+  inputWithAction: { paddingRight: 64 },
+  inputAction: { position: 'absolute', right: 14, minHeight: 34, justifyContent: 'center', paddingHorizontal: 4 },
+  inputActionPressed: { opacity: 0.55 },
+  inputActionText: { color: colors.ink, fontSize: 13, fontWeight: '800' },
   button: {
     width: '100%',
     minWidth: 0,
