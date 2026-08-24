@@ -23,6 +23,8 @@ MindOFF는 영수증·냉장고·생활용품·구독처럼 잊기 쉬운 생활
 
 Cognito, S3, ECR, ECS Fargate, RDS, ALB, CloudFront 자원을 AWS 서울 리전에 배포했습니다. Vercel 운영 화면은 실제 API와 Cognito를 사용합니다. 로컬 기본 설정은 샘플 OCR입니다. 상세 상태는 [MVP 구현 상태](docs/MVP_STATUS.md)를 기준으로 관리합니다.
 
+무료 OCR의 도입 배경, 운영 실패 사례, 전처리·신뢰도 개선과 Textract 전환 기준은 [영수증 OCR 개선 기록](docs/OCR_PIPELINE.md)에 정리했습니다.
+
 ## 구성
 
 ```text

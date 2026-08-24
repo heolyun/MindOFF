@@ -8,8 +8,12 @@ RUN ./gradlew bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app
+ENV MAGICK_MEMORY_LIMIT=256MiB \
+    MAGICK_MAP_LIMIT=256MiB \
+    MAGICK_THREAD_LIMIT=1 \
+    OMP_THREAD_LIMIT=1
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng tesseract-ocr-kor \
+    && apt-get install -y --no-install-recommends imagemagick tesseract-ocr tesseract-ocr-eng tesseract-ocr-kor \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --system --uid 10001 --no-create-home mindoff
 COPY --from=build --chown=mindoff:mindoff /workspace/build/libs/*.jar app.jar

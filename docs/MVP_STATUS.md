@@ -27,7 +27,7 @@
 | --- | --- | --- |
 | Cognito | In Progress | User Pool과 직접 인증 API 배포, 실제 이메일 인증·로그인·로그아웃 확인 | 토큰 갱신 운영 검증 |
 | S3 | Implemented | 실제 비공개·암호화 영수증 업로드 확인 | 보존 정책 결정 |
-| Tesseract | In Progress | 컨테이너 내 한국어·영어 OCR과 영수증 필드 파서 구현·테스트 | 운영 이미지 재업로드 검증 |
+| Tesseract | In Progress | 이미지 전처리, PSM 4·6 비교, TSV 좌표·신뢰도 기반 한국어·영어 OCR 구현·테스트 | 동일 운영 이미지 재업로드 비교 |
 | Textract | Deferred | 교체 가능한 `AnalyzeExpense` 어댑터 유지, AWS Free 계정 플랜에서 서비스 활성화 제한 | 필요 시 플랜 전환 후 재검증 |
 | ECR/ECS/RDS | Implemented | 서울 리전 운영 스택 배포, DB 마이그레이션, ECS steady state, CloudFront HTTPS readiness 검증 완료 |
 | Lambda | Planned | OCR 처리 방식 확정 후 구현 |
