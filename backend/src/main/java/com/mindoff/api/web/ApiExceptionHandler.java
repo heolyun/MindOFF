@@ -1,5 +1,6 @@
 package com.mindoff.api.web;
 
+import com.mindoff.api.service.ReceiptOcrException;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -32,6 +33,15 @@ public class ApiExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<Map<String, Object>> handleOversizedUpload() {
         return badRequest("영수증 이미지는 10MB 이하여야 합니다.");
+    }
+
+    @ExceptionHandler(ReceiptOcrException.class)
+    public ResponseEntity<Map<String, Object>> handleReceiptOcr(ReceiptOcrException exception) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", Instant.now());
+        body.put("status", HttpStatus.UNPROCESSABLE_CONTENT.value());
+        body.put("message", exception.getMessage());
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(body);
     }
 
     private static ResponseEntity<Map<String, Object>> badRequest(String message) {

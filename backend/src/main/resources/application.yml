@@ -42,5 +42,7 @@ mindoff:
   receipt:
     ocr-mode: ${RECEIPT_OCR_MODE:sample}
     s3-bucket: ${RECEIPT_S3_BUCKET:}
+    tesseract-language: ${TESSERACT_LANGUAGE:kor+eng}
+    tesseract-timeout-seconds: ${TESSERACT_TIMEOUT_SECONDS:30}
   aws:
     region: ${AWS_REGION:ap-northeast-2}

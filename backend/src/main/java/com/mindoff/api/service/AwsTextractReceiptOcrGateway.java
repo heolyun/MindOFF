@@ -9,16 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.ServerSideEncryption;
 import software.amazon.awssdk.services.textract.TextractClient;
 import software.amazon.awssdk.services.textract.model.AnalyzeExpenseRequest;
 import software.amazon.awssdk.services.textract.model.AnalyzeExpenseResponse;
@@ -38,32 +33,23 @@ public class AwsTextractReceiptOcrGateway implements ReceiptOcrGateway {
             DateTimeFormatter.ofPattern("MM/dd/yyyy")
     );
 
-    private final S3Client s3Client;
+    private final S3ReceiptImageStore imageStore;
     private final TextractClient textractClient;
     private final String bucket;
 
     public AwsTextractReceiptOcrGateway(
-            S3Client s3Client,
+            S3ReceiptImageStore imageStore,
             TextractClient textractClient,
             @Value("${mindoff.receipt.s3-bucket}") String bucket
     ) {
-        this.s3Client = s3Client;
+        this.imageStore = imageStore;
         this.textractClient = textractClient;
         this.bucket = bucket;
     }
 
     @Override
     public OcrDraft analyze(String fileName, String contentType, byte[] content) {
-        String objectKey = "receipts/" + LocalDate.now() + "/" + UUID.randomUUID() + "-" + safeName(fileName);
-        s3Client.putObject(
-                PutObjectRequest.builder()
-                        .bucket(bucket)
-                        .key(objectKey)
-                        .contentType(contentType)
-                        .serverSideEncryption(ServerSideEncryption.AES256)
-                        .build(),
-                RequestBody.fromBytes(content)
-        );
+        String objectKey = imageStore.store(fileName, contentType, content);
 
         AnalyzeExpenseResponse response = textractClient.analyzeExpense(AnalyzeExpenseRequest.builder()
                 .document(Document.builder()
@@ -161,10 +147,5 @@ public class AwsTextractReceiptOcrGateway implements ReceiptOcrGateway {
 
     private static String normalized(String value) {
         return value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
-    }
-
-    private static String safeName(String fileName) {
-        String value = fileName == null ? "receipt" : fileName.replaceAll("[^a-zA-Z0-9._-]", "_");
-        return value.isBlank() ? "receipt" : value;
     }
 }

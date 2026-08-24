@@ -53,7 +53,7 @@ docker compose down
 - [x] Cognito 관리형 화면 없이 MindOFF 가입·인증·로그인·재설정 화면 연결
 - [ ] Cognito 회원가입·로그인·토큰 갱신·로그아웃
 - [ ] Household 생성, 초대 링크 수락, 구성원 공유 데이터 확인
-- [ ] JPG/PNG 영수증 업로드, S3 저장, Textract 초안, 최종 확정
+- [ ] JPG/PNG 영수증 업로드, S3 저장, Tesseract 초안, 최종 확정
 - [ ] 냉장고·생활용품·Need List·공유 구독의 저장과 재조회
 - [x] ECS 로그에서 Spring Boot 기동, PostgreSQL 연결, Flyway V1~V5 적용 확인
 

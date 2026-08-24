@@ -9,7 +9,6 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.textract.TextractClient;
 
 @Configuration
-@ConditionalOnProperty(name = "mindoff.receipt.ocr-mode", havingValue = "textract")
 public class AwsClientConfig {
     @Bean
     S3Client s3Client(@Value("${mindoff.aws.region:ap-northeast-2}") String region) {
@@ -17,6 +16,7 @@ public class AwsClientConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(name = "mindoff.receipt.ocr-mode", havingValue = "textract")
     TextractClient textractClient(@Value("${mindoff.aws.region:ap-northeast-2}") String region) {
         return TextractClient.builder().region(Region.of(region)).build();
     }

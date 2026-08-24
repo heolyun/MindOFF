@@ -18,4 +18,4 @@ mindoff:
   security:
     mode: ${AUTH_MODE:cognito}
   receipt:
-    ocr-mode: ${RECEIPT_OCR_MODE:textract}
+    ocr-mode: ${RECEIPT_OCR_MODE:tesseract}

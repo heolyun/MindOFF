@@ -263,7 +263,7 @@ Resources:
             - Name: COGNITO_ISSUER_URI
               Value: !Ref CognitoIssuerUri
             - Name: RECEIPT_OCR_MODE
-              Value: textract
+              Value: tesseract
             - Name: RECEIPT_S3_BUCKET
               Value: !Ref ReceiptBucketName
             - Name: AWS_REGION

@@ -19,7 +19,7 @@ MindOFF는 영수증·냉장고·생활용품·구독처럼 잊기 쉬운 생활
 - 생활용품 예상 소진일 보정과 구독 월·연 결제·Household 공유
 - 유통기한·사용주기·무료체험 Attention과 홈 요약
 - MindOFF 이메일 가입·인증·로그인·재설정과 Cognito JWT
-- S3·Textract 어댑터와 ECS/RDS 배포 템플릿
+- S3·Tesseract/Textract OCR 어댑터와 ECS/RDS 배포 템플릿
 
 Cognito, S3, ECR, ECS Fargate, RDS, ALB, CloudFront 자원을 AWS 서울 리전에 배포했습니다. Vercel 운영 화면은 실제 API와 Cognito를 사용합니다. 로컬 기본 설정은 샘플 OCR입니다. 상세 상태는 [MVP 구현 상태](docs/MVP_STATUS.md)를 기준으로 관리합니다.
 
@@ -110,7 +110,7 @@ pnpm build:web:preview
 ## 다음 개발 순서
 
 1. 실제 Cognito 가입·로그인과 Household 초대 전달
-2. S3·Textract 실제 영수증 검증
+2. S3·Tesseract 실제 영수증 검증
 3. EventBridge 기반 시간 확인과 모바일 Push
 4. 모바일 Widget
 
@@ -120,7 +120,8 @@ AWS 서비스는 기능 요구가 생기는 단계에서만 추가합니다. 초
 
 - Cognito JWT 검증과 인증 사용자 세션
 - Cognito 직접 가입·인증·로그인·재설정과 토큰 보관
-- 비공개 S3 저장 및 Textract `AnalyzeExpense` OCR
+- 비공개 S3 저장 및 한국어·영어 Tesseract OCR
+- OCR 제공자 교체 구조와 Textract `AnalyzeExpense` 어댑터
 - 개발·미리보기·운영 환경 분리
 - 비루트 사용자로 실행되는 운영 컨테이너
 - Cognito·S3·ECR·ECS IAM CloudFormation 기반 스택
