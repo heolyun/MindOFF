@@ -10,7 +10,7 @@
 
 | 영역 | 상태 | 현재 범위 | 다음 완료 조건 |
 | --- | --- | --- | --- |
-| Account | In Progress | Cognito PKCE 로그인, JWT 검증, 토큰 보관·갱신·로그아웃 코드 | 실제 Cognito 연결 및 가입·로그아웃 검증 |
+| Account | In Progress | Vercel·Cognito PKCE 연결, Hosted UI 진입, JWT 검증, 토큰 보관·갱신·로그아웃 코드 | 실제 사용자 가입·로그인·로그아웃 검증 |
 | Household | In Progress | 자동 생성, 구성원 조회, 초대 링크 생성·공유·수락·상태 확인 | 초대 이메일 전달 |
 | Receipt | In Progress | 촬영·이미지 업로드, OCR 초안, 전체 필드 검토·분류·확정 | 실제 Textract 검증 |
 | Refrigerator | Implemented | 등록, 구매일, 유통기한, 임박 표시, 다 먹음, Need 재구매 | `아직 있어요` 상태 보정 |
@@ -52,6 +52,7 @@
 - [x] 구독 월·연 결제와 Household 공유
 - [x] 홈 지표·확인 항목 행동 연결
 - [x] CloudFormation·배포 스크립트·운영 컨테이너 사전 검증
+- [x] Vercel 운영 빌드와 AWS API·Cognito 연결
 - [ ] 실제 Cognito 가입·로그인 검증
 - [ ] 실제 S3·Textract 영수증 검증
 - [ ] Household 초대 이메일/딥링크

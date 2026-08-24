@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "installCommand": "npx --yes pnpm@11.19.0 --dir mobile install --frozen-lockfile",
-  "buildCommand": "npx --yes pnpm@11.19.0 --dir mobile build:web:preview",
+  "buildCommand": "npx --yes pnpm@11.19.0 --dir mobile build:web",
   "outputDirectory": "mobile/dist",
   "cleanUrls": true
 }

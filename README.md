@@ -78,11 +78,11 @@ pnpm typecheck
 
 `.github/workflows/ci.yml`은 push와 pull request마다 CloudFormation·배포 스크립트 검사, 백엔드 테스트·컨테이너 빌드, 모바일 타입 검사·Vercel용 웹 빌드를 실행합니다.
 
-## Vercel 미리보기
+## Vercel 운영 배포
 
 배포 주소: https://mindoff-project-preview.vercel.app
 
-Vercel 배포는 백엔드 없이도 화면과 상호작용을 확인할 수 있도록 브라우저 저장소 기반 Preview Data 모드로 빌드됩니다. 냉장고·생활용품·Need List·구독 변경 내용은 같은 브라우저에 저장됩니다.
+Vercel 운영 배포는 AWS API와 Cognito를 사용합니다. 로그인 전까지는 Cognito 회원가입 또는 로그인이 필요합니다.
 
 포트폴리오 확인 순서: 영수증 이미지 선택 → OCR 초안 수정·확정 → 냉장고/생활용품 반영 → 다 먹음/다 씀 → Need 재구매 완료 → 홈 요약 확인.
 
@@ -91,7 +91,7 @@ cd mobile
 pnpm build:web:preview
 ```
 
-실제 Spring Boot API를 사용하는 모바일 개발 모드는 기존과 동일하며 `EXPO_PUBLIC_DEMO_MODE`를 설정하지 않습니다. `vercel.json`은 pnpm 버전을 고정하고 Preview Data 모드 빌드와 `mobile/dist` 정적 배포를 구성합니다.
+`build:web:preview`는 로컬 포트폴리오 점검용 Preview Data 빌드입니다. Vercel은 `build:web`으로 실제 AWS 연결 번들을 생성합니다.
 
 ## 주요 API
 
@@ -111,9 +111,8 @@ pnpm build:web:preview
 
 1. 실제 Cognito 가입·로그인과 Household 초대 전달
 2. S3·Textract 실제 영수증 검증
-3. Vercel 운영 환경을 AWS API·Cognito에 연결
-4. EventBridge 기반 시간 확인과 모바일 Push
-5. 모바일 Widget
+3. EventBridge 기반 시간 확인과 모바일 Push
+4. 모바일 Widget
 
 AWS 서비스는 기능 요구가 생기는 단계에서만 추가합니다. 초기 처리량이 작은 동안 SQS는 사용하지 않습니다.
 

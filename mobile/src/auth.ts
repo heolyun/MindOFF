@@ -1,5 +1,6 @@
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
+import { Platform } from 'react-native';
 
 import { clearTokens, loadTokens, saveTokens } from './tokenStore';
 import type { StoredTokens } from './tokenStore.types';
@@ -50,7 +51,10 @@ export async function signInWithCognito(): Promise<string> {
     throw new Error('Cognito 환경설정이 필요합니다.');
   }
   const discovery = await AuthSession.fetchDiscoveryAsync(issuer);
-  const redirectUri = AuthSession.makeRedirectUri({ scheme: 'mindoff', path: 'auth' });
+  const redirectUri = AuthSession.makeRedirectUri({
+    scheme: 'mindoff',
+    path: Platform.OS === 'web' ? undefined : 'auth',
+  });
   const request = new AuthSession.AuthRequest({
     clientId,
     redirectUri,

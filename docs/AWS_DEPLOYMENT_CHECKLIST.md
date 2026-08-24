@@ -49,13 +49,14 @@ docker compose down
 ## 4. 배포 직후 확인
 
 - [x] `https://d1fq2tsi4ud0ut.cloudfront.net/actuator/health/readiness`가 `UP`
+- [x] Vercel 운영 번들에서 AWS API·Cognito 설정과 CORS 확인
 - [ ] Cognito 회원가입·로그인·토큰 갱신·로그아웃
 - [ ] Household 생성, 초대 링크 수락, 구성원 공유 데이터 확인
 - [ ] JPG/PNG 영수증 업로드, S3 저장, Textract 초안, 최종 확정
 - [ ] 냉장고·생활용품·Need List·공유 구독의 저장과 재조회
 - [x] ECS 로그에서 Spring Boot 기동, PostgreSQL 연결, Flyway V1~V5 적용 확인
 
-기능 확인이 끝나면 Vercel 운영 환경 변수에 API와 Cognito 값을 반영하고 다시 배포합니다.
+Vercel Production 환경에 다음 값을 반영했습니다.
 
 ```text
 EXPO_PUBLIC_API_URL=https://<api-domain>
@@ -72,4 +73,4 @@ EXPO_PUBLIC_COGNITO_CLIENT_ID=<public-app-client-id>
 - 완전 삭제가 필요하면 보존할 데이터와 스냅샷을 먼저 결정한 뒤 삭제 보호를 직접 해제합니다.
 - 비용 확인 없이 실패한 스택이나 고정 비용 자원을 방치하지 않습니다.
 
-현재 상태: AWS Free 플랜이 활성화된 계정에 운영 백엔드 배포를 완료했습니다. CloudFormation 두 스택, ECS 작업, RDS 연결, CloudFront HTTPS readiness가 정상입니다. Vercel의 AWS API·Cognito 연결과 실제 회원가입·OCR 흐름 검증이 다음 작업입니다.
+현재 상태: AWS 운영 백엔드와 Vercel 운영 화면의 연결을 완료했습니다. CloudFront HTTPS, CORS, Cognito OIDC·Hosted UI 진입이 정상입니다. 실제 사용자 가입·로그인과 영수증 OCR 검증이 다음 작업입니다.
