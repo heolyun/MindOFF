@@ -10,7 +10,7 @@
 
 | 영역 | 상태 | 현재 범위 | 다음 완료 조건 |
 | --- | --- | --- | --- |
-| Account | In Progress | MindOFF 자체 가입·이메일 인증·로그인·재설정 화면, Cognito JWT, 토큰 갱신·로그아웃, 실제 가입·로그인 확인 | 토큰 갱신·로그아웃 운영 검증 |
+| Account | In Progress | MindOFF 자체 가입·이메일 인증·로그인·재설정 화면, Cognito JWT, 토큰 갱신·로그아웃, 실제 가입·로그인·로그아웃 확인 | 토큰 갱신 운영 검증 |
 | Household | In Progress | 자동 생성, 구성원 조회, 초대 링크 생성·공유·수락·상태 확인 | 초대 이메일 전달 |
 | Receipt | In Progress | 촬영·이미지 업로드, OCR 초안, 전체 필드 검토·분류·확정 | 실제 Textract 검증 |
 | Refrigerator | Implemented | 등록, 구매일, 유통기한, 임박 표시, 다 먹음, Need 재구매 | `아직 있어요` 상태 보정 |
@@ -25,7 +25,7 @@
 
 | 영역 | 상태 | 비고 |
 | --- | --- | --- |
-| Cognito | In Progress | User Pool과 직접 인증 API 배포, 실제 이메일 인증·로그인 확인 | 토큰 갱신·로그아웃 운영 검증 |
+| Cognito | In Progress | User Pool과 직접 인증 API 배포, 실제 이메일 인증·로그인·로그아웃 확인 | 토큰 갱신 운영 검증 |
 | S3 | In Progress | 실제 비공개 영수증 버킷 배포 완료, 앱 업로드 검증 필요 |
 | Textract | In Progress | `AnalyzeExpense` 어댑터만 준비, 실계정 미검증 |
 | ECR/ECS/RDS | Implemented | 서울 리전 운영 스택 배포, DB 마이그레이션, ECS steady state, CloudFront HTTPS readiness 검증 완료 |
@@ -54,6 +54,7 @@
 - [x] CloudFormation·배포 스크립트·운영 컨테이너 사전 검증
 - [x] Vercel 운영 빌드와 AWS API·Cognito 연결
 - [x] 실제 Cognito 가입·로그인 검증
+- [x] 실제 Cognito 로그아웃 검증
 - [ ] 실제 S3·Textract 영수증 검증
 - [ ] Household 초대 이메일/딥링크
 - [ ] EventBridge 기반 확인 작업
