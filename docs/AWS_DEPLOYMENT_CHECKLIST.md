@@ -25,6 +25,7 @@ docker compose down
 - [ ] AWS CLI에서 배포용 계정 확인: `aws sts get-caller-identity`
 - [ ] 기본 리전 `ap-northeast-2` 확인
 - [ ] Billing 예산과 비용 알림을 먼저 설정
+- [ ] Free 플랜이면 RDS 자동 백업 보관 기간을 1일로 유지
 - [ ] 고유한 Cognito 도메인 접두사 결정
 - [ ] Vercel 운영 주소와 CORS 허용 주소 일치 확인
 - [ ] 저장소나 GitHub Actions에 AWS 비밀키·DB 비밀번호가 없는지 확인

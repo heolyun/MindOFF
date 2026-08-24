@@ -188,7 +188,7 @@ Resources:
       PubliclyAccessible: false
       MultiAZ: false
       AutoMinorVersionUpgrade: true
-      BackupRetentionPeriod: 7
+      BackupRetentionPeriod: 1
       CopyTagsToSnapshot: true
       DeletionProtection: true
       DBSubnetGroupName: !Ref DatabaseSubnetGroup
