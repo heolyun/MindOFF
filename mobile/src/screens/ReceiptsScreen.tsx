@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { api } from '../api';
 import type { ReceiptLine, ReceiptView, Session } from '../types';
@@ -72,16 +72,16 @@ export function ReceiptsScreen({ session }: { session: Session }) {
     setError(null);
     try {
       const confirmed = await api.confirmReceipt(session, draft.receipt.id, {
-        merchantName: draft.receipt.merchantName,
-        purchasedAt: draft.receipt.purchasedAt,
-        totalAmount: Number(draft.receipt.totalAmount),
+        merchantName: '영수증',
+        purchasedAt: uploadDate(draft.receipt.createdAt),
+        totalAmount: draftTotal(draft),
         lines: draft.lines.map((line) => ({
           name: line.name,
           quantity: Number(line.quantity),
           unitPrice: Number(line.unitPrice),
           lineTotal: Number(line.lineTotal),
           targetType: line.targetType,
-          expiresAt: line.expiresAt,
+          expiresAt: line.targetType === 'FRIDGE' ? expiryToIso(line.expiresAt) : null,
         })),
       });
       setReceipts((current) => current.map((item) => item.receipt.id === confirmed.receipt.id ? confirmed : item));
@@ -91,21 +91,6 @@ export function ReceiptsScreen({ session }: { session: Session }) {
     } finally {
       setUploading(false);
     }
-  }
-
-  function updateMerchant(value: string) {
-    setDraft((current) => current ? {
-      ...current,
-      receipt: { ...current.receipt, merchantName: value },
-    } : current);
-  }
-
-  function updateTotal(value: string) {
-    const amount = Number(value.replace(/[^0-9.]/g, ''));
-    setDraft((current) => current ? {
-      ...current,
-      receipt: { ...current.receipt, totalAmount: Number.isFinite(amount) ? amount : 0 },
-    } : current);
   }
 
   function updateLine(index: number, values: Partial<Pick<ReceiptLine, 'name' | 'quantity' | 'unitPrice' | 'lineTotal' | 'targetType' | 'expiresAt'>>) {
@@ -152,21 +137,7 @@ export function ReceiptsScreen({ session }: { session: Session }) {
             <View style={styles.draftBadge}><Text style={styles.draftBadgeText}>OCR 검토</Text></View>
             <Text style={styles.fileName}>{draft.receipt.imageName}</Text>
           </View>
-          <TextField label="매장명" value={draft.receipt.merchantName} onChangeText={updateMerchant} />
-          <TextField
-            label="구매일"
-            value={draft.receipt.purchasedAt}
-            onChangeText={(value) => setDraft((current) => current ? {
-              ...current, receipt: { ...current.receipt, purchasedAt: value },
-            } : current)}
-            placeholder="YYYY-MM-DD"
-          />
-          <TextField
-            label="합계 금액"
-            value={String(draft.receipt.totalAmount)}
-            onChangeText={updateTotal}
-            keyboardType="numeric"
-          />
+          <Text style={styles.draftSummary}>{draft.lines.length}개 · {won(draftTotal(draft))}</Text>
           {draft.lines.map((line, index) => (
             <View key={line.id} style={styles.lineEditor}>
               <TextField label={`품목 ${index + 1}`} value={line.name} onChangeText={(name) => updateLine(index, { name })} />
@@ -177,15 +148,13 @@ export function ReceiptsScreen({ session }: { session: Session }) {
               </View>
               <View style={styles.targetRow}>
                 <TargetButton label="냉장고" selected={line.targetType === 'FRIDGE'} onPress={() => updateLine(index, { targetType: 'FRIDGE' })} />
-                <TargetButton label="생활용품" selected={line.targetType === 'HOUSEHOLD_ITEM'} onPress={() => updateLine(index, { targetType: 'HOUSEHOLD_ITEM' })} />
-                <TargetButton label="제외" selected={line.targetType === 'IGNORE'} onPress={() => updateLine(index, { targetType: 'IGNORE' })} />
+                <TargetButton label="생활용품" selected={line.targetType === 'HOUSEHOLD_ITEM'} onPress={() => updateLine(index, { targetType: 'HOUSEHOLD_ITEM', expiresAt: null })} />
+                <TargetButton label="제외" selected={line.targetType === 'IGNORE'} onPress={() => updateLine(index, { targetType: 'IGNORE', expiresAt: null })} />
               </View>
               {line.targetType === 'FRIDGE' ? (
-                <TextField
-                  label="유통기한"
-                  value={line.expiresAt ?? ''}
-                  onChangeText={(expiresAt) => updateLine(index, { expiresAt: expiresAt || null })}
-                  placeholder="YYYY-MM-DD"
+                <ExpiryDateField
+                  value={line.expiresAt}
+                  onChange={(expiresAt) => updateLine(index, { expiresAt })}
                 />
               ) : null}
             </View>
@@ -203,16 +172,49 @@ export function ReceiptsScreen({ session }: { session: Session }) {
       {confirmedReceipts.map(({ receipt, lines }) => (
         <Card key={receipt.id}>
           <View style={styles.titleRow}>
-            <View>
-              <Text style={styles.receiptTitle}>{receipt.merchantName}</Text>
-              <Text style={styles.date}>{receipt.purchasedAt}</Text>
-            </View>
+            <Text style={styles.receiptTitle}>품목 {lines.length}개</Text>
             <Text style={styles.total}>{won(receipt.totalAmount)}</Text>
           </View>
           {lines.length > 0 && <Text style={styles.cardBody}>{lines.map((line) => line.name).join(' · ')}</Text>}
         </Card>
       ))}
     </Screen>
+  );
+}
+
+function ExpiryDateField({ value, onChange }: { value: string | null; onChange: (value: string | null) => void }) {
+  const parts = expiryParts(value);
+
+  function updatePart(index: number, nextValue: string) {
+    const nextParts = [...parts];
+    nextParts[index] = nextValue.replace(/\D/g, '').slice(0, 2);
+    onChange(nextParts.every((part) => !part) ? null : nextParts.join('/'));
+  }
+
+  return (
+    <View style={styles.expiryField}>
+      <Text style={styles.expiryLabel}>유통기한</Text>
+      <View style={styles.expiryRow}>
+        {['YY', 'MM', 'DD'].map((placeholder, index) => (
+          <View key={placeholder} style={styles.expiryPartRow}>
+            {index > 0 ? <Text style={styles.expirySeparator}>/</Text> : null}
+            <TextInput
+              accessibilityLabel={`유통기한 ${placeholder}`}
+              autoCapitalize="none"
+              inputMode="numeric"
+              keyboardType="number-pad"
+              maxLength={2}
+              onChangeText={(nextValue) => updatePart(index, nextValue)}
+              placeholder={placeholder}
+              placeholderTextColor="#9AA7A2"
+              selectTextOnFocus
+              style={styles.expiryInput}
+              value={parts[index]}
+            />
+          </View>
+        ))}
+      </View>
+    </View>
   );
 }
 
@@ -237,18 +239,46 @@ function roundMoney(value: number) {
   return Math.round(value * 100) / 100;
 }
 
+function draftTotal(draft: ReceiptView) {
+  return roundMoney(draft.lines.reduce((total, line) => total + Number(line.lineTotal || 0), 0));
+}
+
+function uploadDate(createdAt: string) {
+  const date = /^\d{4}-\d{2}-\d{2}/.exec(createdAt)?.[0];
+  return date ?? new Date().toISOString().slice(0, 10);
+}
+
+function expiryParts(value: string | null) {
+  if (!value) return ['', '', ''];
+  const iso = /^20(\d{2})-(\d{2})-(\d{2})$/.exec(value);
+  if (iso) return [iso[1], iso[2], iso[3]];
+  const short = value.split('/');
+  return [short[0] ?? '', short[1] ?? '', short[2] ?? ''];
+}
+
+function expiryToIso(value: string | null) {
+  if (!value) return null;
+  const parts = expiryParts(value);
+  if (!parts.every((part) => /^\d{2}$/.test(part))) return null;
+
+  const year = 2000 + Number(parts[0]);
+  const month = Number(parts[1]);
+  const day = Number(parts[2]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
+
+  return `${year}-${parts[1]}-${parts[2]}`;
+}
+
 function isValidDraft(draft: ReceiptView) {
   return Boolean(
-    draft.receipt.merchantName.trim()
-    && /^\d{4}-\d{2}-\d{2}$/.test(draft.receipt.purchasedAt)
-    && Number(draft.receipt.totalAmount) >= 0
-    && draft.lines.length > 0
+    draft.lines.length > 0
     && draft.lines.every((line) => (
       line.name.trim()
       && Number(line.quantity) > 0
       && Number(line.unitPrice) >= 0
       && Number(line.lineTotal) >= 0
-      && (!line.expiresAt || /^\d{4}-\d{2}-\d{2}$/.test(line.expiresAt))
+      && (line.targetType !== 'FRIDGE' || !line.expiresAt || expiryToIso(line.expiresAt))
     )),
   );
 }
@@ -261,6 +291,7 @@ const styles = StyleSheet.create({
   draftBadge: { backgroundColor: '#FBE6C5', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
   draftBadgeText: { color: '#7A5522', fontSize: 11, fontWeight: '900' },
   fileName: { color: colors.muted, fontSize: 12, flex: 1, textAlign: 'right' },
+  draftSummary: { color: colors.ink, fontSize: 16, fontWeight: '900', textAlign: 'right' },
   lineEditor: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 14, gap: 10 },
   numberRow: { flexDirection: 'row', gap: 8 },
   numberField: { flex: 1, minWidth: 0 },
@@ -269,8 +300,24 @@ const styles = StyleSheet.create({
   targetSelected: { backgroundColor: colors.mint, borderColor: '#9BC8B8' },
   targetText: { color: colors.muted, fontSize: 12, fontWeight: '700' },
   targetTextSelected: { color: colors.ink },
+  expiryField: { gap: 7 },
+  expiryLabel: { color: colors.ink, fontSize: 13, fontWeight: '700' },
+  expiryRow: { flexDirection: 'row', alignItems: 'center' },
+  expiryPartRow: { flexDirection: 'row', alignItems: 'center' },
+  expirySeparator: { color: colors.muted, fontSize: 18, paddingHorizontal: 8 },
+  expiryInput: {
+    width: 64,
+    minHeight: 46,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 12,
+    backgroundColor: '#FBFCFB',
+    color: colors.ink,
+    fontSize: 16,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
   listTitle: { color: colors.ink, fontSize: 18, fontWeight: '800', marginTop: 4 },
   receiptTitle: { color: colors.ink, fontSize: 17, fontWeight: '800' },
-  date: { color: colors.muted, fontSize: 12, marginTop: 4 },
   total: { color: colors.ink, fontSize: 18, fontWeight: '900' },
 });
