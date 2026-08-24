@@ -20,6 +20,7 @@ import com.mindoff.api.service.HouseholdInvitationService;
 import com.mindoff.api.service.InventoryService;
 import com.mindoff.api.service.NeedListService;
 import com.mindoff.api.service.ReceiptService;
+import com.mindoff.api.service.SubscriptionService;
 import com.mindoff.api.domain.ReceiptItemTarget;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -61,6 +62,9 @@ class CoreFlowIntegrationTests {
 
     @Autowired
     private HouseholdInvitationService invitationService;
+
+    @Autowired
+    private SubscriptionService subscriptionService;
 
     @Autowired
     private HouseholdMemberRepository memberRepository;
@@ -327,6 +331,53 @@ class CoreFlowIntegrationTests {
         HomeService.HomeSummary memberSummary = homeService.summarize(owner.household().getId(), member.user().getId());
         assertThat(memberSummary.recordedFixedLivingCost()).isEqualByComparingTo("10000");
         assertThat(memberSummary.attentionCount()).isEqualTo(1);
+    }
+
+    @Test
+    void subscriptionOwnerCanUpdateAndDeleteSubscription() {
+        BootstrapService.BootstrapResult owner = bootstrapService.bootstrap(
+                "subscription-editor@mindoff.local",
+                "Subscription Editor",
+                "구독 관리 집"
+        );
+        Subscription created = subscriptionService.add(
+                owner.user().getId(),
+                new SubscriptionService.SubscriptionInput(
+                        "기존 구독",
+                        BigDecimal.valueOf(9_900),
+                        BillingCycle.MONTHLY,
+                        LocalDate.now().plusDays(3),
+                        null,
+                        null,
+                        false,
+                        owner.household().getId()
+                )
+        );
+
+        Subscription updated = subscriptionService.update(
+                owner.user().getId(),
+                created.getId(),
+                new SubscriptionService.SubscriptionInput(
+                        "변경된 구독",
+                        BigDecimal.valueOf(120_000),
+                        BillingCycle.ANNUAL,
+                        LocalDate.now().plusMonths(1),
+                        LocalDate.now().plusDays(7),
+                        "https://example.com/manage",
+                        true,
+                        owner.household().getId()
+                )
+        );
+
+        assertThat(updated.getName()).isEqualTo("변경된 구독");
+        assertThat(updated.getAmount()).isEqualByComparingTo("120000");
+        assertThat(updated.getBillingCycle()).isEqualTo(BillingCycle.ANNUAL);
+        assertThat(updated.isShared()).isTrue();
+        assertThat(updated.getHouseholdId()).isEqualTo(owner.household().getId());
+
+        subscriptionService.delete(owner.user().getId(), created.getId());
+
+        assertThat(subscriptionRepository.findById(created.getId())).isEmpty();
     }
 
     @Test

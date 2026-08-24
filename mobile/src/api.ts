@@ -82,6 +82,8 @@ export type MindoffApi = {
   completeNeed(session: Session, itemId: string, input: CompleteNeedInput): Promise<NeedListItem>;
   getSubscriptions(session: Session): Promise<Subscription[]>;
   addSubscription(session: Session, input: SubscriptionInput): Promise<Subscription>;
+  updateSubscription(session: Session, subscriptionId: string, input: SubscriptionInput): Promise<Subscription>;
+  deleteSubscription(session: Session, subscriptionId: string): Promise<void>;
   getReceipts(session: Session): Promise<ReceiptView[]>;
   intakeReceipt(session: Session, upload: ReceiptUpload): Promise<ReceiptView>;
   confirmReceipt(session: Session, receiptId: string, input: ReceiptConfirmInput): Promise<ReceiptView>;
@@ -98,6 +100,15 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   }
 
   return response.json() as Promise<T>;
+}
+
+async function requestWithoutBody(path: string, options?: RequestInit): Promise<void> {
+  const response = await authenticatedFetch(path, options, true);
+  if (!response.ok) {
+    const body = await response.json().catch(() => undefined);
+    const message = body?.message ?? body?.detail ?? `API 요청 실패 (${response.status})`;
+    throw new Error(message);
+  }
 }
 
 async function requestForm<T>(path: string, form: FormData): Promise<T> {
@@ -263,6 +274,23 @@ const remoteApi: MindoffApi = {
         shared: input.shared,
         householdId: session.householdId,
       }),
+    });
+  },
+
+  updateSubscription(session, subscriptionId, input) {
+    return request(`/api/users/${session.userId}/subscriptions/${subscriptionId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        ...input,
+        managementUrl: input.managementUrl || null,
+        householdId: session.householdId,
+      }),
+    });
+  },
+
+  async deleteSubscription(session, subscriptionId) {
+    await requestWithoutBody(`/api/users/${session.userId}/subscriptions/${subscriptionId}`, {
+      method: 'DELETE',
     });
   },
 
@@ -695,6 +723,33 @@ const demoApi: MindoffApi = {
     store.subscriptions.unshift(item);
     writeDemoStore(store);
     return item;
+  },
+
+  async updateSubscription(session, subscriptionId, input) {
+    const store = readDemoStore();
+    const item = required(store.subscriptions.find((candidate) => candidate.id === subscriptionId));
+    Object.assign(item, {
+      name: input.name,
+      amount: input.amount,
+      billingCycle: input.billingCycle,
+      nextBillingAt: input.nextBillingAt,
+      trialEndAt: input.trialEndAt,
+      managementUrl: input.managementUrl || null,
+      shared: input.shared,
+      householdId: input.shared ? session.householdId : null,
+    });
+    writeDemoStore(store);
+    await previewDelay();
+    return item;
+  },
+
+  async deleteSubscription(_session, subscriptionId) {
+    const store = readDemoStore();
+    const index = store.subscriptions.findIndex((candidate) => candidate.id === subscriptionId);
+    if (index < 0) throw new Error('구독을 찾을 수 없습니다.');
+    store.subscriptions.splice(index, 1);
+    writeDemoStore(store);
+    await previewDelay();
   },
 
   async getReceipts() {

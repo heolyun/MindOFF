@@ -15,7 +15,7 @@
 | Receipt | In Progress | 촬영·이미지 업로드, OCR 초안, 전체 필드 검토·분류·확정 | 실제 Textract 검증 |
 | Refrigerator | Implemented | 등록, 구매일, 유통기한, 임박 표시, 다 먹음, Need 재구매 | `아직 있어요` 상태 보정 |
 | Household Items | Implemented | 등록, 다 씀, 사용기간, 가중평균 예측, 예상일, `아직 있어요` 보정 | 예측 정확도 데이터 축적 |
-| Subscription | Implemented | 월·연 결제, 월 환산 금액, 체험 종료, 관리 URL, Household 공유 | 수정·삭제 |
+| Subscription | Implemented | 월·연 결제, 월 환산 금액, 체험 종료, 관리 URL, Household 공유, 수정·삭제 | 알림 연동 |
 | Need List | Implemented | 자동/수동 추가, 구매 링크, 상세값 편집, 냉장고·생활용품 재구매 | 구매처 추천 연동 |
 | Home | Implemented | 확인 목록, Need 수, 고정비, 이번 달 영수증 금액, 화면 행동 연결 | 구매 품목 요약 확장 |
 | Push | Planned | 없음 | 임박·예상 소진·체험 종료 알림 |

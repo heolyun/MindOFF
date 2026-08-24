@@ -75,6 +75,26 @@ public class Subscription {
         this.createdAt = Instant.now();
     }
 
+    public void update(
+            String name,
+            BigDecimal amount,
+            BillingCycle billingCycle,
+            LocalDate nextBillingAt,
+            LocalDate trialEndAt,
+            String managementUrl,
+            boolean shared,
+            UUID householdId
+    ) {
+        this.name = name.trim();
+        this.amount = amount;
+        this.billingCycle = billingCycle;
+        this.nextBillingAt = nextBillingAt;
+        this.trialEndAt = trialEndAt;
+        this.managementUrl = managementUrl == null || managementUrl.isBlank() ? null : managementUrl.trim();
+        this.shared = shared;
+        this.householdId = shared ? householdId : null;
+    }
+
     public UUID getId() { return id; }
     public UUID getUserId() { return userId; }
     public UUID getHouseholdId() { return householdId; }

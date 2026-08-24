@@ -2,8 +2,7 @@ package com.mindoff.api.web;
 
 import com.mindoff.api.domain.BillingCycle;
 import com.mindoff.api.domain.Subscription;
-import com.mindoff.api.repository.SubscriptionRepository;
-import com.mindoff.api.service.AccessService;
+import com.mindoff.api.service.SubscriptionService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -13,55 +12,53 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 @RestController
 @RequestMapping("/api/users/{userId}/subscriptions")
 public class SubscriptionController {
-    private final AccessService accessService;
-    private final SubscriptionRepository subscriptionRepository;
+    private final SubscriptionService subscriptionService;
 
-    public SubscriptionController(AccessService accessService, SubscriptionRepository subscriptionRepository) {
-        this.accessService = accessService;
-        this.subscriptionRepository = subscriptionRepository;
+    public SubscriptionController(SubscriptionService subscriptionService) {
+        this.subscriptionService = subscriptionService;
     }
 
     @GetMapping
-    @Transactional(readOnly = true)
     public List<Subscription> list(@PathVariable UUID userId, @RequestParam UUID householdId) {
-        accessService.requireMember(householdId, userId);
-        return subscriptionRepository.findVisibleToUser(userId, householdId);
+        return subscriptionService.list(userId, householdId);
     }
 
     @PostMapping
-    @Transactional
     public Subscription add(
             @PathVariable UUID userId,
             @Valid @RequestBody AddSubscriptionRequest request
     ) {
-        if (request.shared()) {
-            accessService.requireMember(request.householdId(), userId);
-        } else {
-            accessService.requireUser(userId);
-        }
-        return subscriptionRepository.save(new Subscription(
-                userId,
-                request.name(),
-                request.amount(),
-                request.billingCycle(),
-                request.nextBillingAt(),
-                request.trialEndAt(),
-                request.managementUrl(),
-                request.shared(),
-                request.shared() ? request.householdId() : null
-        ));
+        return subscriptionService.add(userId, request.toInput());
+    }
+
+    @PatchMapping("/{subscriptionId}")
+    public Subscription update(
+            @PathVariable UUID userId,
+            @PathVariable UUID subscriptionId,
+            @Valid @RequestBody AddSubscriptionRequest request
+    ) {
+        return subscriptionService.update(userId, subscriptionId, request.toInput());
+    }
+
+    @DeleteMapping("/{subscriptionId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable UUID userId, @PathVariable UUID subscriptionId) {
+        subscriptionService.delete(userId, subscriptionId);
     }
 
     public record AddSubscriptionRequest(
@@ -74,5 +71,17 @@ public class SubscriptionController {
             boolean shared,
             @NotNull UUID householdId
     ) {
+        SubscriptionService.SubscriptionInput toInput() {
+            return new SubscriptionService.SubscriptionInput(
+                    name,
+                    amount,
+                    billingCycle,
+                    nextBillingAt,
+                    trialEndAt,
+                    managementUrl,
+                    shared,
+                    householdId
+            );
+        }
     }
 }
